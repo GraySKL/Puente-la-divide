@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import ScenarioCard from '../../components/ScenarioCard.astro';
+import { t } from '../../i18n/strings';
+
+const locale = 'en' as const;
+const strings = t(locale);
+const scenarios = (await getCollection('scenarios'))
+  .filter(s => s.data.lang === 'en')
+  .sort((a, b) => a.data.order - b.data.order);
+---
+<BaseLayout locale={locale} title="Know your rights" description={strings.tagline}>
+  <section class="mb-10">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">{strings.tagline}</h1>
+    <p class="text-[var(--color-muted)]">A small, fast, no-tracking guide. Use it. Print it. Share it.</p>
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-xl md:text-2xl font-semibold mb-2">{strings.sections.scenariosTitle}</h2>
+    <p class="text-[var(--color-muted)] mb-3">{strings.sections.scenariosLead}</p>
+    {scenarios.map(s => (
+      <ScenarioCard
+        locale={locale}
+        href={`/${locale}/scenarios/${s.data.slug}`}
+        title={s.data.title}
+        summary={s.data.summary}
+        order={s.data.order}
+      />
+    ))}
+  </section>
+
+  <section class="mb-10">
+    <h2 class="text-xl md:text-2xl font-semibold mb-2">{strings.sections.practiceTitle}</h2>
+    <p class="text-[var(--color-muted)] mb-3">{strings.sections.practiceLead}</p>
+    <a href={`/${locale}/practice`} class="inline-block px-5 py-3 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400">
+      {strings.nav.practice} →
+    </a>
+  </section>
+</BaseLayout>

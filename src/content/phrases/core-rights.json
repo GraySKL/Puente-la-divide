@@ -1,0 +1,205 @@
+{
+  "$schema": "Each phrase MUST trace to the source field. Sources allowlist: ILRC Red Cards, NILC KYR card, ACLU KYR for immigrants, United We Dream KYR.",
+  "phrases": [
+    {
+      "id": "no-open-door",
+      "en": "I do not have to open the door unless you have a warrant signed by a judge.",
+      "es": "No tengo que abrir la puerta a menos que usted tenga una orden firmada por un juez.",
+      "phoneticEn": "ai du not hav tu o-pen tha dor un-LES yu hav a WAR-ant saind bai a JUDJ.",
+      "phoneticEs": "no TEN-go keh ah-BREER lah PWAIR-tah a ME-nos keh oo-STED TEN-gah oo-nah OR-den feer-MAH-dah por oon HOOEZ.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "slide-warrant",
+      "en": "Please slide the warrant under the door so I can read it.",
+      "es": "Por favor, deslice la orden por debajo de la puerta para que la pueda leer.",
+      "phoneticEn": "pleez slaid tha WAR-ant UN-der tha dor so ai kan reed it.",
+      "phoneticEs": "por fah-VOR, des-LEE-seh lah OR-den por deh-BAH-ho deh lah PWAIR-tah PAH-rah keh lah PWEH-dah leh-AIR.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "fifth-amendment-silence",
+      "en": "I do not wish to speak with you, answer your questions, or sign or hand you any documents based on my Fifth Amendment rights under the United States Constitution.",
+      "es": "No deseo hablar con usted, responder sus preguntas, o firmarle o entregarle ningún documento, basándome en mi quinto derecho enmendado bajo la constitución de los Estados Unidos.",
+      "phoneticEn": "ai du not WISH tu speek with yu, AN-ser yor KWES-chuns, or sain or hand yu E-nee DOK-yu-ments...",
+      "phoneticEs": "no deh-SEH-o ah-BLAR kon oo-STED, res-pon-DAIR soos preh-GOON-tas, o feer-MAR-leh o en-treh-GAR-leh neen-GOON doh-koo-MEN-toh.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "fourth-amendment-no-entry",
+      "en": "I do not give you permission to enter my home based on my Fourth Amendment rights under the United States Constitution unless you have a warrant to enter, signed by a judge or magistrate with my name on it that you slide under the door.",
+      "es": "No le doy permiso para entrar a mi casa, basándome en mi cuarto derecho enmendado bajo la Constitución de los Estados Unidos a menos de que usted tenga una orden para entrar firmada por un juez o magistrado con mi nombre que usted desliza por debajo de la puerta.",
+      "phoneticEn": "ai du not giv yu per-MISH-un tu EN-ter mai hom...",
+      "phoneticEs": "no leh DOY per-MEE-so PAH-rah en-TRAR a mee KAH-sah.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "no-search-belongings",
+      "en": "I do not give you permission to search any of my belongings based on my Fourth Amendment rights.",
+      "es": "No le doy permiso para registrar ninguna de mis pertenencias basándome en mi cuarto derecho enmendado.",
+      "phoneticEn": "ai du not giv yu per-MISH-un tu surch E-nee of mai bee-LON-gings.",
+      "phoneticEs": "no leh DOY per-MEE-so PAH-rah reh-hees-TRAR neen-GOO-nah deh mees per-teh-NEN-syas.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "exercise-rights",
+      "en": "I choose to exercise my constitutional rights.",
+      "es": "Elijo ejercer mis derechos constitucionales.",
+      "phoneticEn": "ai chooz tu EK-ser-saiz mai kon-sti-TOO-shun-al raits.",
+      "phoneticEs": "eh-LEE-ho eh-her-SAIR mees deh-REH-chos kons-tee-too-syo-NAH-les.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "am-i-free-to-leave",
+      "en": "Am I free to leave?",
+      "es": "¿Soy libre de irme?",
+      "phoneticEn": "am ai free tu leev?",
+      "phoneticEs": "soy LEE-breh deh EER-meh?",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "remain-silent",
+      "en": "I want to remain silent.",
+      "es": "Quiero permanecer en silencio.",
+      "phoneticEn": "ai want tu ree-MAIN SAI-lent.",
+      "phoneticEs": "kee-AIR-o per-mah-neh-SAIR en see-LEN-syo.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "want-lawyer",
+      "en": "I want to speak with a lawyer.",
+      "es": "Quiero hablar con un abogado.",
+      "phoneticEn": "ai want tu speek with a LOY-er.",
+      "phoneticEs": "kee-AIR-o ah-BLAR kon oon ah-bo-GAH-do.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "no-questions-without-lawyer",
+      "en": "I will not answer any questions without my lawyer present.",
+      "es": "No responderé ninguna pregunta sin la presencia de mi abogado.",
+      "phoneticEn": "ai wil not AN-ser E-nee KWES-chuns with-OUT mai LOY-er PRE-zent.",
+      "phoneticEs": "no res-pon-deh-REH neen-GOO-nah preh-GOON-tah seen lah preh-SEN-syah deh mee ah-bo-GAH-do.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "no-sign",
+      "en": "I will not sign anything without speaking to a lawyer first.",
+      "es": "No firmaré nada sin antes hablar con un abogado.",
+      "phoneticEn": "ai wil not sain E-nee-thing with-OUT SPEE-king tu a LOY-er furst.",
+      "phoneticEs": "no feer-mah-REH NAH-dah seen AHN-tes ah-BLAR kon oon ah-bo-GAH-do.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "no-consent-search-car",
+      "en": "I do not consent to a search of my car.",
+      "es": "No doy mi consentimiento para que registren mi auto.",
+      "phoneticEn": "ai du not kon-SENT tu a surch of mai kar.",
+      "phoneticEs": "no DOY mee kon-sen-tee-MYEN-toh PAH-rah keh reh-HEES-tren mee OW-toh.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "phone-call",
+      "en": "I want to make a phone call.",
+      "es": "Quiero hacer una llamada telefónica.",
+      "phoneticEn": "ai want tu maik a fon kawl.",
+      "phoneticEs": "kee-AIR-o ah-SAIR oo-nah yah-MAH-dah teh-leh-FOH-nee-kah.",
+      "source": "NILC KYR card"
+    },
+    {
+      "id": "consulate",
+      "en": "I want to contact my country's consulate.",
+      "es": "Quiero contactar al consulado de mi país.",
+      "phoneticEn": "ai want tu KON-takt mai KUN-treez KON-su-let.",
+      "phoneticEs": "kee-AIR-o kon-tak-TAR al kon-soo-LAH-do deh mee pah-EES.",
+      "source": "NILC KYR card"
+    },
+    {
+      "id": "do-not-lie",
+      "en": "I will not lie to you, and I will not show you false documents — but I will not answer your questions either.",
+      "es": "No le voy a mentir, y no le mostraré documentos falsos — pero tampoco voy a responder sus preguntas.",
+      "phoneticEn": "ai wil not lai tu yu, and ai wil not sho yu fals DOK-yu-ments.",
+      "phoneticEs": "no leh voy ah men-TEER, ee no leh mos-trah-REH doh-koo-MEN-tos FAL-sos.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "record-encounter",
+      "en": "I am recording this encounter.",
+      "es": "Estoy grabando este encuentro.",
+      "phoneticEn": "ai am ree-KOR-ding this en-KOWN-ter.",
+      "phoneticEs": "es-TOY grah-BAN-do ES-teh en-KWEN-troh.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "what-is-your-name",
+      "en": "What is your name and badge number?",
+      "es": "¿Cuál es su nombre y número de placa?",
+      "phoneticEn": "wat iz yor naim and badj NUM-ber?",
+      "phoneticEs": "kwal es soo NOM-breh ee NOO-meh-roh deh PLAH-kah?",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "ask-judicial-warrant",
+      "en": "Is that a judicial warrant signed by a judge, or an administrative warrant?",
+      "es": "¿Es esa una orden judicial firmada por un juez, o una orden administrativa?",
+      "phoneticEn": "iz that a joo-DI-shul WAR-ant saind bai a judj, or an ad-MIN-is-trei-tiv WAR-ant?",
+      "phoneticEs": "es EH-sah oo-nah OR-den hoo-dee-SYAL feer-MAH-dah por oon HOOEZ, o oo-nah OR-den ad-mee-nees-trah-TEE-vah?",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "step-outside",
+      "en": "If I step outside, I am not consenting to be detained.",
+      "es": "Si salgo afuera, no estoy consintiendo a ser detenido.",
+      "phoneticEn": "if ai step out-SAID, ai am not kon-SEN-ting tu bee dee-TAINED.",
+      "phoneticEs": "see SAL-go ah-FWEH-rah, no es-TOY kon-seen-TYEN-do a sair deh-teh-NEE-do.",
+      "source": "NILC KYR card"
+    },
+    {
+      "id": "i-have-rights",
+      "en": "I have rights regardless of my immigration status.",
+      "es": "Tengo derechos sin importar mi estatus migratorio.",
+      "phoneticEn": "ai hav raits ree-GARD-les of mai i-mi-GREI-shun STAY-tus.",
+      "phoneticEs": "TEN-go deh-REH-chos seen eem-por-TAR mee es-TAH-toos mee-grah-TOR-yo.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "leave-document",
+      "en": "Please leave the document you want me to sign and I will look at it with my lawyer.",
+      "es": "Por favor, deje el documento que quiere que firme y lo revisaré con mi abogado.",
+      "phoneticEn": "pleez leev tha DOK-yu-ment yu want mee tu sain and ai wil luk at it with mai LOY-er.",
+      "phoneticEs": "por fah-VOR, DEH-heh el doh-koo-MEN-toh keh KEER-eh keh FEER-meh ee lo reh-vee-sah-REH kon mee ah-bo-GAH-do.",
+      "source": "ILRC Red Card 2024"
+    },
+    {
+      "id": "memorize-a-number",
+      "en": "Memorize a lawyer or family member's phone number — your phone may be taken.",
+      "es": "Memorice el número de un abogado o familiar — pueden quitarle su teléfono.",
+      "phoneticEn": "ME-mo-raiz a LOY-er or FAM-i-lee MEM-bers fon NUM-ber.",
+      "phoneticEs": "meh-mo-REE-seh el NOO-meh-roh deh oon ah-bo-GAH-do o fah-mee-LYAR.",
+      "source": "United We Dream KYR"
+    },
+    {
+      "id": "do-not-flee",
+      "en": "Do not run, resist, or obstruct — even if you believe the stop is unfair.",
+      "es": "No corra, resista, ni obstruya — aunque crea que la parada es injusta.",
+      "phoneticEn": "du not run, rey-ZIST, or ob-STRUKT.",
+      "phoneticEs": "no KOR-rah, reh-SEES-tah, nee obs-TROO-yah.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "no-consent-search-home",
+      "en": "I do not consent to a search of my home.",
+      "es": "No doy mi consentimiento para que registren mi casa.",
+      "phoneticEn": "ai du not kon-SENT tu a surch of mai hom.",
+      "phoneticEs": "no DOY mee kon-sen-tee-MYEN-toh PAH-rah keh reh-HEES-tren mee KAH-sah.",
+      "source": "ACLU KYR for immigrants"
+    },
+    {
+      "id": "ask-id-back",
+      "en": "May I have my ID back?",
+      "es": "¿Puede devolverme mi identificación?",
+      "phoneticEn": "mei ai hav mai ai-DEE bak?",
+      "phoneticEs": "PWEH-deh deh-vol-VAIR-meh mee ee-den-tee-fee-kah-SYON?",
+      "source": "ACLU KYR for immigrants"
+    }
+  ]
+}

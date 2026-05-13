@@ -1,0 +1,120 @@
+---
+import type { Locale } from '../i18n/strings';
+import phrasesData from '../content/phrases/core-rights.json';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const phrases = phrasesData.phrases;
+const labels = locale === 'en'
+  ? { prompt: 'You think', target: 'You say (in Spanish)', flip: 'Reveal', next: 'Next', prev: 'Previous', count: (i: number, n: number) => `${i + 1} / ${n}` }
+  : { prompt: 'Piensa', target: 'Diga (en inglés)', flip: 'Mostrar', next: 'Siguiente', prev: 'Anterior', count: (i: number, n: number) => `${i + 1} / ${n}` };
+---
+<section
+  id="deck"
+  data-locale={locale}
+  data-phrases={JSON.stringify(phrases)}
+  class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 md:p-6 my-4"
+  aria-live="polite"
+>
+  <div class="flex items-center justify-between text-xs text-[var(--color-muted)] mb-4">
+    <span id="deck-count">{labels.count(0, phrases.length)}</span>
+    <span id="deck-source"></span>
+  </div>
+
+  <div class="text-xs uppercase tracking-wide text-[var(--color-muted)] mb-1" id="deck-prompt-label">{labels.prompt}</div>
+  <p id="deck-prompt" class="text-lg md:text-xl leading-relaxed mb-5"></p>
+
+  <div id="deck-revealed" hidden>
+    <div class="text-xs uppercase tracking-wide text-amber-400 mb-1" id="deck-target-label">{labels.target}</div>
+    <p id="deck-target" class="text-xl md:text-2xl font-medium leading-snug"></p>
+    <p id="deck-phonetic" class="mt-1 text-sm text-[var(--color-muted)] italic"></p>
+  </div>
+
+  <div class="mt-6 flex flex-wrap gap-2">
+    <button id="deck-flip" type="button" class="flex-1 min-w-[8rem] px-4 py-3 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400">
+      {labels.flip}
+    </button>
+    <button id="deck-prev" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]">
+      {labels.prev}
+    </button>
+    <button id="deck-next" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]">
+      {labels.next}
+    </button>
+  </div>
+</section>
+
+<script>
+  type Phrase = {
+    id: string;
+    en: string;
+    es: string;
+    phoneticEn?: string;
+    phoneticEs?: string;
+    source?: string;
+  };
+
+  const root = document.getElementById('deck');
+  if (root) {
+    const locale = (root.dataset.locale as 'en' | 'es') ?? 'en';
+    const phrases: Phrase[] = JSON.parse(root.dataset.phrases ?? '[]');
+    const STORAGE_KEY = `puente:deck:${locale}:index`;
+
+    const promptEl = document.getElementById('deck-prompt')!;
+    const targetEl = document.getElementById('deck-target')!;
+    const phoneticEl = document.getElementById('deck-phonetic')!;
+    const sourceEl = document.getElementById('deck-source')!;
+    const countEl = document.getElementById('deck-count')!;
+    const revealEl = document.getElementById('deck-revealed') as HTMLDivElement;
+    const flipBtn = document.getElementById('deck-flip') as HTMLButtonElement;
+    const prevBtn = document.getElementById('deck-prev') as HTMLButtonElement;
+    const nextBtn = document.getElementById('deck-next') as HTMLButtonElement;
+
+    const stored = parseInt(localStorage.getItem(STORAGE_KEY) ?? '0', 10);
+    let index = Number.isFinite(stored) && stored >= 0 && stored < phrases.length ? stored : 0;
+    let revealed = false;
+
+    function render() {
+      const p = phrases[index];
+      const promptText = locale === 'en' ? p.en : p.es;
+      const targetText = locale === 'en' ? p.es : p.en;
+      const phonetic = locale === 'en' ? p.phoneticEs : p.phoneticEn;
+      const promptLang = locale;
+      const targetLang = locale === 'en' ? 'es' : 'en';
+
+      promptEl.textContent = promptText;
+      promptEl.setAttribute('lang', promptLang);
+      targetEl.textContent = targetText;
+      targetEl.setAttribute('lang', targetLang);
+      phoneticEl.textContent = phonetic ?? '';
+      phoneticEl.hidden = !phonetic;
+      sourceEl.textContent = p.source ? (locale === 'en' ? `Source: ${p.source}` : `Fuente: ${p.source}`) : '';
+      countEl.textContent = `${index + 1} / ${phrases.length}`;
+      revealEl.hidden = !revealed;
+      try {
+        localStorage.setItem(STORAGE_KEY, String(index));
+      } catch {
+        // localStorage unavailable (private mode); silently ignore — no-data is fine.
+      }
+    }
+
+    flipBtn.addEventListener('click', () => {
+      revealed = !revealed;
+      render();
+    });
+    prevBtn.addEventListener('click', () => {
+      index = (index - 1 + phrases.length) % phrases.length;
+      revealed = false;
+      render();
+    });
+    nextBtn.addEventListener('click', () => {
+      index = (index + 1) % phrases.length;
+      revealed = false;
+      render();
+    });
+
+    render();
+  }
+</script>

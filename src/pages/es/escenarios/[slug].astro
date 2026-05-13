@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const scenarios = (await getCollection('scenarios')).filter(s => s.data.lang === 'es');
+  return scenarios.map(entry => ({
+    params: { slug: entry.data.slug },
+    props: { entry }
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<BaseLayout locale="es" title={entry.data.title} description={entry.data.summary}>
+  <article class="prose prose-invert max-w-none">
+    <p class="text-xs uppercase tracking-wide text-[var(--color-muted)]">
+      Escenario {String(entry.data.order).padStart(2, '0')}
+    </p>
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">{entry.data.title}</h1>
+    <Content />
+    <p class="mt-8 text-xs text-[var(--color-muted)]">
+      Fuente: {entry.data.source}
+    </p>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .prose h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+  .prose h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  .prose p  { margin: 0.75rem 0; line-height: 1.65; }
+  .prose ul { margin: 0.75rem 0 0.75rem 1.25rem; list-style: disc; }
+  .prose ul li { margin: 0.35rem 0; line-height: 1.55; }
+  .prose blockquote {
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 3px solid var(--color-accent);
+    color: var(--color-muted);
+    font-style: italic;
+  }
+  .prose strong { color: #fff; font-weight: 600; }
+  .prose a { color: var(--color-accent); text-decoration: underline; }
+</style>

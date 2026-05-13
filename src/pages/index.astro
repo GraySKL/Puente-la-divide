@@ -1,0 +1,47 @@
+---
+import '../styles/globals.css';
+import { t } from '../i18n/strings';
+const en = t('en');
+const es = t('es');
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Bilingual Know Your Rights — for ICE encounters." />
+    <meta name="theme-color" content="#0b1020" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <title>Puente / Bridge — Know Your Rights / Conozca sus derechos</title>
+  </head>
+  <body>
+    <main class="max-w-xl mx-auto px-4 py-12 min-h-screen flex flex-col justify-center">
+      <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">Puente / Bridge</h1>
+      <p class="text-base text-[var(--color-muted)] mb-1" lang="en">{en.tagline}</p>
+      <p class="text-base text-[var(--color-muted)] mb-8" lang="es">{es.tagline}</p>
+
+      <h2 class="text-sm uppercase tracking-wide text-[var(--color-muted)] mb-3">
+        {en.chooseLanguage} · {es.chooseLanguage}
+      </h2>
+
+      <div class="grid gap-3">
+        <a href="/es"
+           class="block bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 hover:border-amber-500 transition-colors"
+           lang="es">
+          <div class="text-xl font-medium">Hablo español</div>
+          <div class="text-sm text-[var(--color-muted)] mt-1">Quiero aprender mis derechos y las palabras en inglés.</div>
+        </a>
+        <a href="/en"
+           class="block bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 hover:border-amber-500 transition-colors"
+           lang="en">
+          <div class="text-xl font-medium">I speak English</div>
+          <div class="text-sm text-[var(--color-muted)] mt-1">I'm here to help — I want to learn the words in Spanish.</div>
+        </a>
+      </div>
+
+      <p class="mt-10 text-xs text-[var(--color-muted)]" lang="en">{en.disclaimer}</p>
+      <p class="mt-2 text-xs text-[var(--color-muted)]" lang="es">{es.disclaimer}</p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+---
+import '../styles/globals.css';
+import { type Locale, t } from '../i18n/strings';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+}
+
+const { locale, title, description } = Astro.props;
+const strings = t(locale);
+const pageTitle = title ? `${title} — ${strings.siteName}` : strings.siteName;
+const pageDesc = description ?? strings.tagline;
+const otherLocale: Locale = locale === 'en' ? 'es' : 'en';
+const otherLocaleHref = Astro.url.pathname.replace(/^\/(en|es)(\/|$)/, `/${otherLocale}$2`);
+---
+<!DOCTYPE html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={pageDesc} />
+    <meta name="theme-color" content="#0b1020" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-amber-500 focus:text-black focus:p-2 focus:rounded">
+      Skip to main content
+    </a>
+    <header class="border-b border-[var(--color-border)]">
+      <nav class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <a href={`/${locale}`} class="font-semibold tracking-tight">
+          {strings.siteName}
+        </a>
+        <div class="flex items-center gap-3 text-sm">
+          <a href={`/${locale}`} class="hover:underline">{strings.nav.home}</a>
+          <a href={`/${locale}/${locale === 'en' ? 'scenarios' : 'escenarios'}`} class="hover:underline">{strings.nav.scenarios}</a>
+          <a href={`/${locale}/${locale === 'en' ? 'practice' : 'practica'}`} class="hover:underline">{strings.nav.practice}</a>
+          <a href={otherLocaleHref} class="px-2 py-1 rounded border border-[var(--color-border)] hover:bg-[var(--color-card)]" aria-label="Switch language">
+            {strings.nav.switchLang}
+          </a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main" class="max-w-3xl mx-auto px-4 py-6">
+      <slot />
+    </main>
+
+    <footer class="max-w-3xl mx-auto px-4 py-8 mt-12 border-t border-[var(--color-border)] text-sm text-[var(--color-muted)]">
+      <p class="mb-2">{strings.disclaimer}</p>
+      <p class="text-xs">
+        Puente / Bridge — open source.
+        <a class="underline" href="https://www.ilrc.org/redcards">ILRC</a>,
+        <a class="underline" href="https://www.nilc.org/resources/know-your-rights-card/">NILC</a>,
+        <a class="underline" href="https://www.aclu.org/know-your-rights/immigrants-rights">ACLU</a>,
+        <a class="underline" href="https://unitedwedream.org/resources/know-your-rights/">United We Dream</a>.
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0.5rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+</style>

@@ -1,0 +1,20 @@
+---
+import type { Locale } from '../i18n/strings';
+
+interface Props {
+  locale: Locale;
+  href: string;
+  title: string;
+  summary: string;
+  order: number;
+}
+
+const { locale, href, title, summary, order } = Astro.props;
+---
+<a href={href} class="block bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-4 md:p-5 my-3 hover:border-amber-500 transition-colors">
+  <div class="flex items-baseline gap-3">
+    <span class="text-xs text-[var(--color-muted)] tabular-nums">{String(order).padStart(2, '0')}</span>
+    <h3 class="text-lg md:text-xl font-semibold tracking-tight" lang={locale}>{title}</h3>
+  </div>
+  <p class="mt-2 text-sm md:text-base text-[var(--color-fg)] opacity-80" lang={locale}>{summary}</p>
+</a>

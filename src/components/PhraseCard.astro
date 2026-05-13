@@ -1,0 +1,47 @@
+---
+import type { Locale } from '../i18n/strings';
+
+interface Props {
+  /** Locale of the user — drives which side is shown as 'prompt' vs 'translation'. */
+  locale: Locale;
+  /** The English text of the phrase (what to say if the user speaks Spanish first). */
+  en: string;
+  /** The Spanish text of the phrase. */
+  es: string;
+  /** Phonetic pronunciation hint in the OPPOSITE language to help non-native speakers. */
+  phoneticEn?: string;
+  phoneticEs?: string;
+  /** Source citation (e.g., "ILRC Red Card 2024"). */
+  source?: string;
+}
+
+const { locale, en, es, phoneticEn, phoneticEs, source } = Astro.props;
+const promptLang = locale; // user's language
+const targetLang = locale === 'en' ? 'es' : 'en';
+const promptText = locale === 'en' ? en : es;
+const targetText = locale === 'en' ? es : en;
+const phoneticForTarget = locale === 'en' ? phoneticEs : phoneticEn;
+---
+<article class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-4 md:p-5 my-3">
+  <div class="text-xs uppercase tracking-wide text-[var(--color-muted)] mb-1">
+    {promptLang === 'en' ? 'You think:' : 'Piensa:'}
+  </div>
+  <p class="text-base md:text-lg leading-relaxed mb-3" lang={promptLang}>{promptText}</p>
+
+  <div class="text-xs uppercase tracking-wide text-amber-400 mb-1">
+    {promptLang === 'en' ? 'You say (in Spanish):' : 'Diga (en inglés):'}
+  </div>
+  <p class="text-lg md:text-xl font-medium leading-snug" lang={targetLang}>{targetText}</p>
+
+  {phoneticForTarget && (
+    <p class="mt-1 text-sm text-[var(--color-muted)] italic">
+      {phoneticForTarget}
+    </p>
+  )}
+
+  {source && (
+    <p class="mt-3 text-xs text-[var(--color-muted)]">
+      {promptLang === 'en' ? 'Source: ' : 'Fuente: '}{source}
+    </p>
+  )}
+</article>

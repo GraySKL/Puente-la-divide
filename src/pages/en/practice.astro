@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PracticeDeck from '../../components/PracticeDeck.astro';
+import { t } from '../../i18n/strings';
+const locale = 'en' as const;
+const strings = t(locale);
+---
+<BaseLayout locale={locale} title={strings.sections.practiceTitle} description={strings.sections.practiceLead}>
+  <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">{strings.sections.practiceTitle}</h1>
+  <p class="text-[var(--color-muted)] mb-4">{strings.sections.practiceLead}</p>
+  <PracticeDeck locale={locale} />
+</BaseLayout>
