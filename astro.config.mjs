@@ -2,7 +2,7 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
-import { VitePWA } from '@vite-pwa/astro';
+import AstroPWA from '@vite-pwa/astro';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
   },
   integrations: [
     mdx(),
-    VitePWA({
+    AstroPWA({
       registerType: 'autoUpdate',
       // Service worker is for OFFLINE CACHING ONLY. Do not add anything that calls home.
       workbox: {
