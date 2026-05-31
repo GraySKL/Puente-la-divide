@@ -1,0 +1,21 @@
+# Same shape as .gitignore — keeps Claude's exploration off files that
+# don't inform decisions, so it doesn't burn tokens scanning them.
+
+# dependencies & lock files
+node_modules/
+package-lock.json
+
+# build output
+dist/
+.output/
+.astro/
+
+# pwa generated artifacts
+dev-dist/
+sw.js
+workbox-*.js
+
+# logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
