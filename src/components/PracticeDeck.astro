@@ -9,18 +9,31 @@ interface Props {
 const { locale } = Astro.props;
 const phrases = phrasesData.phrases;
 const labels = locale === 'en'
-  ? { prompt: 'You think', target: 'You say (in Spanish)', flip: 'Reveal', next: 'Next', prev: 'Previous', count: (i: number, n: number) => `${i + 1} / ${n}` }
-  : { prompt: 'Piensa', target: 'Diga (en inglés)', flip: 'Mostrar', next: 'Siguiente', prev: 'Anterior', count: (i: number, n: number) => `${i + 1} / ${n}` };
+  ? {
+      prompt: 'You think', target: 'You say (in Spanish)', prev: 'Previous', next: 'Next',
+      // EN learners hear Spanish before they see it: tap → listen, tap again → reveal + listen.
+      hearHidden: 'Hear it in Spanish', revealHear: 'Reveal & hear again', hearAgain: 'Hear again',
+      playAria: 'Play in Spanish', hint: 'Listen first — tap again to see the words.',
+      audioFail: "Couldn't play audio on this device.",
+    }
+  : {
+      prompt: 'Piensa', target: 'Diga (en inglés)', prev: 'Anterior', next: 'Siguiente',
+      // ES learners: the Spanish prompt is tappable to hear; the button reveals the English.
+      reveal: 'Mostrar', hide: 'Ocultar',
+      playAria: 'Escuchar en español', hint: 'Toca el español para escucharlo.',
+      audioFail: 'No se pudo reproducir el audio en este dispositivo.',
+    };
 ---
 <section
   id="deck"
   data-locale={locale}
   data-phrases={JSON.stringify(phrases)}
+  data-labels={JSON.stringify(labels)}
   class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 md:p-6 my-4"
   aria-live="polite"
 >
   <div class="flex items-center justify-between text-xs text-[var(--color-muted)] mb-4">
-    <span id="deck-count">{labels.count(0, phrases.length)}</span>
+    <span id="deck-count">{`1 / ${phrases.length}`}</span>
     <span id="deck-source"></span>
   </div>
 
@@ -33,17 +46,15 @@ const labels = locale === 'en'
     <p id="deck-phonetic" class="mt-1 text-sm text-[var(--color-muted)] italic"></p>
   </div>
 
-  <div class="mt-6 flex flex-wrap gap-2">
-    <button id="deck-flip" type="button" class="flex-1 min-w-[8rem] px-4 py-3 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400">
-      {labels.flip}
-    </button>
-    <button id="deck-prev" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]">
-      {labels.prev}
-    </button>
-    <button id="deck-next" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]">
-      {labels.next}
-    </button>
+  <p id="deck-hint" class="mt-3 text-xs text-[var(--color-muted)]"></p>
+
+  <div class="mt-4 flex flex-wrap gap-2">
+    <button id="deck-hear" type="button" class="flex-1 min-w-[10rem] px-4 py-3 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400 inline-flex items-center justify-center gap-2"></button>
+    <button id="deck-prev" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]"></button>
+    <button id="deck-next" type="button" class="px-4 py-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]"></button>
   </div>
+
+  <p id="deck-audio-note" class="mt-3 text-xs text-red-400" hidden></p>
 </section>
 
 <script>
@@ -60,21 +71,89 @@ const labels = locale === 'en'
   if (root) {
     const locale = (root.dataset.locale as 'en' | 'es') ?? 'en';
     const phrases: Phrase[] = JSON.parse(root.dataset.phrases ?? '[]');
+    const L: Record<string, string> = JSON.parse(root.dataset.labels ?? '{}');
     const STORAGE_KEY = `puente:deck:${locale}:index`;
+    const AUDIO_BASE = '/audio/es/';
+
+    // For EN learners the Spanish text is the *hidden* answer, so the two-tap
+    // hear→reveal flow applies. For ES learners the Spanish is the visible prompt.
+    const spanishIsHidden = locale === 'en';
 
     const promptEl = document.getElementById('deck-prompt')!;
     const targetEl = document.getElementById('deck-target')!;
     const phoneticEl = document.getElementById('deck-phonetic')!;
     const sourceEl = document.getElementById('deck-source')!;
     const countEl = document.getElementById('deck-count')!;
+    const hintEl = document.getElementById('deck-hint')!;
+    const noteEl = document.getElementById('deck-audio-note') as HTMLParagraphElement;
     const revealEl = document.getElementById('deck-revealed') as HTMLDivElement;
-    const flipBtn = document.getElementById('deck-flip') as HTMLButtonElement;
+    const hearBtn = document.getElementById('deck-hear') as HTMLButtonElement;
     const prevBtn = document.getElementById('deck-prev') as HTMLButtonElement;
     const nextBtn = document.getElementById('deck-next') as HTMLButtonElement;
 
     const stored = parseInt(localStorage.getItem(STORAGE_KEY) ?? '0', 10);
     let index = Number.isFinite(stored) && stored >= 0 && stored < phrases.length ? stored : 0;
     let revealed = false;
+    // 'hidden' = not heard yet · 'heard' = played once, words still hidden · 'revealed'
+    let stage: 'hidden' | 'heard' | 'revealed' = 'hidden';
+
+    // ---- audio: plays one local mp3 at a time, no network at runtime ----
+    let currentAudio: HTMLAudioElement | null = null;
+    let playingEl: HTMLElement | null = null;
+
+    function clearPlaying() {
+      if (playingEl) playingEl.classList.remove('is-playing');
+      playingEl = null;
+    }
+    function onAudioError() {
+      clearPlaying();
+      noteEl.textContent = L.audioFail ?? '';
+      noteEl.hidden = false;
+    }
+    function play(id: string, el: HTMLElement | null) {
+      if (!id) return;
+      noteEl.hidden = true;
+      try {
+        if (currentAudio) currentAudio.pause();
+        clearPlaying();
+        currentAudio = new Audio(`${AUDIO_BASE}${id}.mp3`);
+        playingEl = el;
+        if (el) el.classList.add('is-playing');
+        currentAudio.addEventListener('ended', clearPlaying);
+        currentAudio.addEventListener('error', onAudioError);
+        const p = currentAudio.play();
+        if (p && typeof p.catch === 'function') p.catch(onAudioError);
+      } catch {
+        onAudioError();
+      }
+    }
+
+    // Render `text` inside `el` as a tappable play button (used for Spanish text).
+    function setPlayable(el: HTMLElement, text: string, id: string, lang: string) {
+      el.replaceChildren();
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'play-phrase';
+      btn.lang = lang;
+      btn.setAttribute('aria-label', `${text} — ${L.playAria}`);
+      const span = document.createElement('span');
+      span.textContent = text;
+      const ico = document.createElement('span');
+      ico.className = 'play-ico';
+      ico.setAttribute('aria-hidden', 'true');
+      ico.textContent = '🔊';
+      btn.append(span, ico);
+      btn.addEventListener('click', () => play(id, btn));
+      el.appendChild(btn);
+    }
+    function setPlain(el: HTMLElement, text: string, lang: string) {
+      el.replaceChildren(document.createTextNode(text));
+      el.lang = lang;
+    }
+
+    function currentId() {
+      return phrases[index]?.id ?? '';
+    }
 
     function render() {
       const p = phrases[index];
@@ -84,15 +163,34 @@ const labels = locale === 'en'
       const promptLang = locale;
       const targetLang = locale === 'en' ? 'es' : 'en';
 
-      promptEl.textContent = promptText;
-      promptEl.setAttribute('lang', promptLang);
-      targetEl.textContent = targetText;
-      targetEl.setAttribute('lang', targetLang);
+      // Prompt: Spanish (ES locale) is playable; English (EN locale) is plain text.
+      if (locale === 'es') setPlayable(promptEl, promptText, p.id, promptLang);
+      else setPlain(promptEl, promptText, promptLang);
+
+      // Target: Spanish (EN locale) becomes playable once revealed; English is plain.
+      if (locale === 'en') setPlayable(targetEl, targetText, p.id, targetLang);
+      else setPlain(targetEl, targetText, targetLang);
+
       phoneticEl.textContent = phonetic ?? '';
       phoneticEl.hidden = !phonetic;
       sourceEl.textContent = p.source ? (locale === 'en' ? `Source: ${p.source}` : `Fuente: ${p.source}`) : '';
       countEl.textContent = `${index + 1} / ${phrases.length}`;
       revealEl.hidden = !revealed;
+
+      // Primary button label + hint reflect the current stage.
+      prevBtn.textContent = L.prev;
+      nextBtn.textContent = L.next;
+      if (spanishIsHidden) {
+        hearBtn.textContent =
+          stage === 'hidden' ? `🔊 ${L.hearHidden}` :
+          stage === 'heard' ? L.revealHear :
+          `🔊 ${L.hearAgain}`;
+        hintEl.textContent = stage === 'hidden' ? L.hint : '';
+      } else {
+        hearBtn.textContent = revealed ? L.hide : L.reveal;
+        hintEl.textContent = L.hint;
+      }
+
       try {
         localStorage.setItem(STORAGE_KEY, String(index));
       } catch {
@@ -100,21 +198,84 @@ const labels = locale === 'en'
       }
     }
 
-    flipBtn.addEventListener('click', () => {
-      revealed = !revealed;
-      render();
+    function resetCard() {
+      revealed = false;
+      stage = 'hidden';
+      noteEl.hidden = true;
+      if (currentAudio) currentAudio.pause();
+      clearPlaying();
+    }
+
+    hearBtn.addEventListener('click', () => {
+      if (spanishIsHidden) {
+        if (stage === 'hidden') {
+          // 1st tap: hear the Spanish, words stay hidden.
+          stage = 'heard';
+          render();
+          play(currentId(), hearBtn);
+        } else if (stage === 'heard') {
+          // 2nd tap: reveal the words AND say it again.
+          stage = 'revealed';
+          revealed = true;
+          render();
+          play(currentId(), null);
+        } else {
+          // revealed: replay on demand.
+          play(currentId(), hearBtn);
+        }
+      } else {
+        // ES learners: button just reveals/hides the English answer (no EN audio).
+        revealed = !revealed;
+        render();
+      }
     });
+
     prevBtn.addEventListener('click', () => {
       index = (index - 1 + phrases.length) % phrases.length;
-      revealed = false;
+      resetCard();
       render();
     });
     nextBtn.addEventListener('click', () => {
       index = (index + 1) % phrases.length;
-      revealed = false;
+      resetCard();
       render();
     });
 
     render();
   }
 </script>
+
+<style>
+  /* A whole phrase rendered as a tap-to-hear control: looks like text, acts like a button. */
+  .play-phrase {
+    display: inline;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0.25rem;
+  }
+  .play-phrase:hover { text-decoration: underline; text-decoration-color: #f59e0b; text-underline-offset: 3px; }
+  .play-phrase:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+  .play-ico {
+    display: inline-block;
+    margin-left: 0.4em;
+    font-size: 0.8em;
+    opacity: 0.65;
+    vertical-align: baseline;
+  }
+  .play-phrase:hover .play-ico { opacity: 1; }
+  .play-phrase.is-playing .play-ico,
+  .is-playing .play-ico { opacity: 1; animation: puente-pulse 0.9s ease-in-out infinite; }
+  @keyframes puente-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .is-playing .play-ico { animation: none; }
+  }
+</style>

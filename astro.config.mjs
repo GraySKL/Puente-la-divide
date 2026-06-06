@@ -19,7 +19,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Service worker is for OFFLINE CACHING ONLY. Do not add anything that calls home.
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,json,mdx}'],
+        // mp3 = pre-generated Spanish phrase audio (public/audio/es/*.mp3),
+        // precached so the app speaks with zero network calls once installed.
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,json,mdx,mp3}'],
         navigateFallback: '/offline',
         cleanupOutdatedCaches: true
       },

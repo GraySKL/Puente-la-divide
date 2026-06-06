@@ -4,6 +4,8 @@ import type { Locale } from '../i18n/strings';
 interface Props {
   /** Locale of the user — drives which side is shown as 'prompt' vs 'translation'. */
   locale: Locale;
+  /** Phrase id — matches the pre-generated audio file public/audio/es/<id>.mp3. */
+  id?: string;
   /** The English text of the phrase (what to say if the user speaks Spanish first). */
   en: string;
   /** The Spanish text of the phrase. */
@@ -15,23 +17,38 @@ interface Props {
   source?: string;
 }
 
-const { locale, en, es, phoneticEn, phoneticEs, source } = Astro.props;
+const { locale, id, en, es, phoneticEn, phoneticEs, source } = Astro.props;
 const promptLang = locale; // user's language
 const targetLang = locale === 'en' ? 'es' : 'en';
 const promptText = locale === 'en' ? en : es;
 const targetText = locale === 'en' ? es : en;
 const phoneticForTarget = locale === 'en' ? phoneticEs : phoneticEn;
+// The Spanish side is tappable to hear (audio is pre-generated for Spanish only).
+const esIsPrompt = locale === 'es';
+const playAria = locale === 'en' ? 'Play in Spanish' : 'Escuchar en español';
 ---
 <article class="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-4 md:p-5 my-3">
   <div class="text-xs uppercase tracking-wide text-[var(--color-muted)] mb-1">
     {promptLang === 'en' ? 'You think:' : 'Piensa:'}
   </div>
-  <p class="text-base md:text-lg leading-relaxed mb-3" lang={promptLang}>{promptText}</p>
+  <p class="text-base md:text-lg leading-relaxed mb-3" lang={promptLang}>
+    {esIsPrompt && id ? (
+      <button type="button" class="play-phrase" data-audio-id={id} aria-label={`${promptText} — ${playAria}`}>
+        <span>{promptText}</span><span class="play-ico" aria-hidden="true">🔊</span>
+      </button>
+    ) : promptText}
+  </p>
 
   <div class="text-xs uppercase tracking-wide text-amber-400 mb-1">
     {promptLang === 'en' ? 'You say (in Spanish):' : 'Diga (en inglés):'}
   </div>
-  <p class="text-lg md:text-xl font-medium leading-snug" lang={targetLang}>{targetText}</p>
+  <p class="text-lg md:text-xl font-medium leading-snug" lang={targetLang}>
+    {!esIsPrompt && id ? (
+      <button type="button" class="play-phrase" data-audio-id={id} aria-label={`${targetText} — ${playAria}`}>
+        <span>{targetText}</span><span class="play-ico" aria-hidden="true">🔊</span>
+      </button>
+    ) : targetText}
+  </p>
 
   {phoneticForTarget && (
     <p class="mt-1 text-sm text-[var(--color-muted)] italic">
@@ -45,3 +62,66 @@ const phoneticForTarget = locale === 'en' ? phoneticEs : phoneticEn;
     </p>
   )}
 </article>
+
+<script>
+  // Delegated tap-to-hear for every PhraseCard on the page. Plays a local mp3 only —
+  // no network at runtime (audio is pre-generated and precached; see CLAUDE.md).
+  if (!(window as any).__puentePhraseAudio) {
+    (window as any).__puentePhraseAudio = true;
+    let current: HTMLAudioElement | null = null;
+    let playingEl: HTMLElement | null = null;
+    const clear = () => { if (playingEl) playingEl.classList.remove('is-playing'); playingEl = null; };
+    document.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>('.play-phrase[data-audio-id]');
+      if (!btn) return;
+      const audioId = btn.dataset.audioId;
+      if (!audioId) return;
+      try {
+        if (current) current.pause();
+        clear();
+        current = new Audio(`/audio/es/${audioId}.mp3`);
+        playingEl = btn;
+        btn.classList.add('is-playing');
+        current.addEventListener('ended', clear);
+        current.addEventListener('error', clear);
+        const p = current.play();
+        if (p && typeof p.catch === 'function') p.catch(clear);
+      } catch {
+        clear();
+      }
+    });
+  }
+</script>
+
+<style>
+  .play-phrase {
+    display: inline;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0.25rem;
+  }
+  .play-phrase:hover { text-decoration: underline; text-decoration-color: #f59e0b; text-underline-offset: 3px; }
+  .play-phrase:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+  .play-ico {
+    display: inline-block;
+    margin-left: 0.4em;
+    font-size: 0.8em;
+    opacity: 0.65;
+    vertical-align: baseline;
+  }
+  .play-phrase:hover .play-ico { opacity: 1; }
+  .play-phrase.is-playing .play-ico { opacity: 1; animation: puente-pulse 0.9s ease-in-out infinite; }
+  @keyframes puente-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .play-phrase.is-playing .play-ico { animation: none; }
+  }
+</style>
