@@ -2,7 +2,7 @@
 // Ported from Claude Design/pscreens.jsx (Preact + TS).
 import { useEffect, useState } from 'preact/hooks';
 import {
-  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, ONBOARDING, PHRASES, RIGHTS, TOPICS, type TopicKey,
+  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, RIGHTS, TOPICS, type TopicKey,
 } from './data';
 import { C, Glyph, Guia, Pill, ProgressBar, speak, speakEs, speakSeq, topicEdge, topicInk, topicMid, topicSoft } from './ui';
 
@@ -114,7 +114,9 @@ export function Home({
         {/* topics */}
         <div style={{ font: `800 12px ${C.round}`, letterSpacing: '1px', textTransform: 'uppercase', color: C.faint, margin: '24px 0 13px' }}>¿Qué quieres practicar?</div>
         <div style={{ display: 'grid', gridTemplateColumns: wide ? '1fr 1fr 1fr' : '1fr 1fr', gap: 12 }}>
-          {APP_TOPICS.map((k) => {
+          {/* Locked topics stay hidden from the public build (owner decision
+              2026-07-09) — they appear here automatically once unlocked. */}
+          {APP_TOPICS.filter((k) => !LOCKED[k]).map((k) => {
             const tt = TOPICS[k];
             const locked = LOCKED[k];
             const done = completed[k];
@@ -220,6 +222,74 @@ export function Phrasebook({ wide }: { wide: boolean }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- PREPÁRATE (family preparedness checklist) ----------
+// Bilingual, sourced checklist — see PREP_ITEMS in data.ts for per-item
+// citations (ILRC + United We Dream family-preparedness plan, brief
+// "Cross-cutting" section). Framed as care, not fear: "Prepararse es cuidar
+// a los tuyos." Persisted via the puente_v1 localStorage state in app.tsx.
+export function Preparate({
+  wide, checked, onToggle,
+}: {
+  wide: boolean;
+  checked: Record<string, boolean>;
+  onToggle: (id: string) => void;
+}) {
+  const hue = PREPARE_HUE;
+  const done = PREP_ITEMS.filter((it) => checked[it.id]).length;
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
+      <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 4 }}>
+          <Guia size={44} ink={C.ink} ring="rgba(0,0,0,0.1)" label="Tía" />
+          <div style={{ flex: 1 }}>
+            <div style={{ font: `800 22px/1.15 ${C.round}`, color: C.ink }}>Prepárate</div>
+            <div style={{ font: `700 12px ${C.round}`, color: topicInk(hue) }}>Prepararse es cuidar a los tuyos.</div>
+          </div>
+        </div>
+        <div style={{ font: `600 13px/1.5 ${C.round}`, color: C.dim, marginTop: 10, marginBottom: 8 }}>
+          Un plan sencillo, hecho con calma. Toca cada tarjeta cuando la tengas lista.
+          <br />
+          A simple plan, made calmly. Tap each card once it's done.
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <ProgressBar value={done / PREP_ITEMS.length} hue={hue} />
+          <div style={{ font: `800 11px ${C.round}`, color: topicInk(hue), marginTop: 6 }}>{done}/{PREP_ITEMS.length} listo</div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {PREP_ITEMS.map((it) => {
+            const on = !!checked[it.id];
+            return (
+              <div
+                key={it.id}
+                onClick={() => onToggle(it.id)}
+                style={{
+                  cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12, borderRadius: 18,
+                  background: on ? topicSoft(hue) : '#fff', border: `1px solid ${on ? topicEdge(hue) : 'transparent'}`,
+                  boxShadow: on ? 'none' : C.sh, padding: '14px 16px',
+                }}
+              >
+                <span style={{ fontSize: 20, flex: '0 0 auto', lineHeight: 1.3 }}>{on ? '✅' : it.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ font: `800 14.5px/1.4 ${C.round}`, color: C.ink }}>{it.es}</div>
+                  <div
+                    onClick={(e) => { e.stopPropagation(); speak(it.en); }}
+                    style={{ font: `600 12px/1.4 ${C.round}`, color: C.dim, marginTop: 5, cursor: 'pointer' }}
+                  >
+                    {it.en}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ textAlign: 'center', font: `600 10.5px/1.4 ${C.round}`, color: C.faint, marginTop: 18 }}>
+          {DISCLAIMER_ES} {DISCLAIMER_EN}
+        </div>
       </div>
     </div>
   );

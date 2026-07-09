@@ -18,12 +18,23 @@
     "it hurts here": "en/learner-hurts-here.mp3",
     "i do not consent to a search": "en/learner-no-consent-search.mp3",
     "i want to speak to a lawyer": "en/learner-speak-lawyer.mp3",
-    "i do not wish to answer questions": "en/learner-no-answer-questions.mp3"
+    "i do not wish to answer questions": "en/learner-no-answer-questions.mp3",
+    "police open the door": "en/voice-outside-police.mp3",
+    "which agency are you with": "en/learner-which-agency.mp3",
+    "please slide the warrant under the door so i can read it": "en/learner-slide-warrant.mp3",
+    "i do not consent to your entry": "en/learner-no-consent-entry.mp3",
+    "is that a judicial warrant signed by a judge or an administrative warrant": "en/learner-judicial-or-admin.mp3",
+    "share your a-number with someone you trust and save the link to ice's online detainee locator": "en/prep-a-number.mp3",
+    "keep a preparedness packet — important documents contacts instructions — locked away where ice cannot access it": "en/prep-packet.mp3",
+    "carry valid proof of your status or work permit with you never false documents or documents from another country": "en/prep-valid-docs.mp3",
+    "choose one emergency contact who has your passcodes and house keys just in case": "en/prep-contact.mp3"
   },
   "es": {
     "aquí tiene oficial": "es/app-aqui-tiene.mp3",
     "necesito ver a un doctor": "es/app-ver-doctor.mp3",
     "me duele aquí": "es/app-me-duele.mp3",
-    "podemos hablar del pago después": "es/app-pago-despues.mp3"
+    "podemos hablar del pago después": "es/app-pago-despues.mp3",
+    "de qué agencia es usted": "es/app-que-agencia.mp3",
+    "no doy mi consentimiento para su entrada": "es/app-no-consent-entrada.mp3"
   }
 }

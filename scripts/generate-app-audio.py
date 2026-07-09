@@ -80,6 +80,19 @@ LINES = [
     ("app-ver-doctor", "es", MARISOL, "+0%", "Necesito ver a un doctor."),
     ("app-me-duele", "es", MARISOL, "+0%", "Me duele aquí."),
     ("app-pago-despues", "es", MARISOL, "+0%", "¿Podemos hablar del pago después?"),
+    # --- La casa / deepened parada (added 2026-07-09, post content-vet) ---
+    ("voice-outside-police", "en", OFICIAL, "+0%", "Police! Open the door."),
+    ("learner-which-agency", "en", LEARNER, "-8%", "Which agency are you with?"),
+    ("learner-slide-warrant", "en", LEARNER, "-8%", "Please slide the warrant under the door so I can read it."),
+    ("learner-no-consent-entry", "en", LEARNER, "-8%", "I do not consent to your entry."),
+    ("learner-judicial-or-admin", "en", LEARNER, "-8%", "Is that a judicial warrant signed by a judge, or an administrative warrant?"),
+    ("app-que-agencia", "es", MARISOL, "+0%", "¿De qué agencia es usted?"),
+    ("app-no-consent-entrada", "es", MARISOL, "+0%", "No doy mi consentimiento para su entrada."),
+    # --- Prepárate checklist EN mirrors (tap-to-hear) ---
+    ("prep-a-number", "en", RECEPCION, "+0%", "Share your A-Number with someone you trust, and save the link to ICE's online detainee locator."),
+    ("prep-packet", "en", RECEPCION, "+0%", "Keep a preparedness packet — important documents, contacts, instructions — locked away where ICE cannot access it."),
+    ("prep-valid-docs", "en", RECEPCION, "+0%", "Carry valid proof of your status or work permit with you. Never false documents or documents from another country."),
+    ("prep-contact", "en", RECEPCION, "+0%", "Choose one emergency contact who has your passcodes and house keys, just in case."),
 ]
 
 

@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { LOCKED, type TopicKey } from './data';
 import { C, Guia, topicInk, topicMid, topicSoft } from './ui';
-import { ComingSoon, DiscreetCover, Home, Onboarding, Phrasebook, RightsCard } from './screens';
+import { ComingSoon, DiscreetCover, Home, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
 import { ScenarioRunner } from './scenario';
 
 const LS_KEY = 'puente_v1';
@@ -19,6 +19,7 @@ const LS_KEY = 'puente_v1';
 interface Persisted {
   completed?: Record<string, boolean>;
   onboarded?: boolean;
+  prep?: Record<string, boolean>;
 }
 
 function loadState(): Persisted {
@@ -36,12 +37,13 @@ function saveState(s: Persisted) {
   }
 }
 
-type Route = 'onboarding' | 'home' | 'scenario' | 'phrasebook' | 'comingsoon';
+type Route = 'onboarding' | 'home' | 'scenario' | 'phrasebook' | 'preparate' | 'comingsoon';
 
 interface PuenteState {
   route: Route;
   topic: TopicKey;
   completed: Record<string, boolean>;
+  prep: Record<string, boolean>;
   rightsOpen: boolean;
   discreet: boolean;
 }
@@ -51,6 +53,7 @@ interface PuenteHandlers {
   goHome: () => void;
   pick: (k: TopicKey) => void;
   complete: (k: TopicKey) => void;
+  togglePrep: (id: string) => void;
   openRights: () => void;
   closeRights: () => void;
   nav: (r: string) => void;
@@ -62,18 +65,20 @@ function usePuente() {
   const [route, setRoute] = useState<Route>(saved.onboarded ? 'home' : 'onboarding');
   const [topic, setTopic] = useState<TopicKey>('parada');
   const [completed, setCompleted] = useState<Record<string, boolean>>(saved.completed || {});
+  const [prep, setPrep] = useState<Record<string, boolean>>(saved.prep || {});
   const [rightsOpen, setRightsOpen] = useState(false);
   const [discreet, setDiscreet] = useState(false);
 
   useEffect(() => {
-    saveState({ ...loadState(), completed, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
-  }, [completed, route]);
+    saveState({ ...loadState(), completed, prep, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
+  }, [completed, prep, route]);
 
   const h: PuenteHandlers = {
     finishOnboarding: () => { saveState({ ...loadState(), onboarded: true }); setRoute('home'); },
     goHome: () => setRoute('home'),
     pick: (k) => { setTopic(k); setRoute(LOCKED[k] ? 'comingsoon' : 'scenario'); },
     complete: (k) => setCompleted((c) => ({ ...c, [k]: true })),
+    togglePrep: (id) => setPrep((p) => ({ ...p, [id]: !p[id] })),
     openRights: () => setRightsOpen(true),
     closeRights: () => setRightsOpen(false),
     nav: (r) => {
@@ -83,7 +88,7 @@ function usePuente() {
     },
     exitDiscreet: () => setDiscreet(false),
   };
-  return { st: { route, topic, completed, rightsOpen, discreet } as PuenteState, h };
+  return { st: { route, topic, completed, prep, rightsOpen, discreet } as PuenteState, h };
 }
 
 function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.Element {
@@ -94,6 +99,8 @@ function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.El
       return <ScenarioRunner scenarioKey={st.topic} wide={wide} onExit={h.goHome} onOpenRights={h.openRights} onComplete={h.complete} />;
     case 'phrasebook':
       return <Phrasebook wide={wide} />;
+    case 'preparate':
+      return <Preparate wide={wide} checked={st.prep} onToggle={h.togglePrep} />;
     case 'comingsoon':
       return <ComingSoon topic={st.topic} onClose={h.goHome} />;
     default:
@@ -106,6 +113,7 @@ function TabBar({ route, onNav }: { route: Route; onNav: (r: string) => void }) 
   const items: [string, string, string][] = [
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Frases'],
+    ['preparate', '🧳', 'Prepárate'],
     ['derechos', '🛡️', 'Derechos'],
     ['salir', '🙈', 'Salir'],
   ];
@@ -131,7 +139,7 @@ function TabBar({ route, onNav }: { route: Route; onNav: (r: string) => void }) 
 }
 
 function NarrowChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
-  const showTabs = st.route === 'home' || st.route === 'phrasebook';
+  const showTabs = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate';
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>{activeScreen(st, h, false)}</div>
@@ -155,6 +163,7 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
   const items: [Route, string, string][] = [
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Mis frases'],
+    ['preparate', '🧳', 'Prepárate'],
   ];
   return (
     <div style={{ width: 240, flex: '0 0 auto', background: '#fff', borderRight: '1px solid rgba(44,40,36,0.08)', display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
@@ -194,7 +203,7 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
 }
 
 function WideChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
-  const wideScreens = st.route === 'home' || st.route === 'phrasebook';
+  const wideScreens = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate';
   return (
     <div style={{ height: '100%', width: '100%', display: 'flex', minHeight: 0, position: 'relative', background: C.bg }}>
       <Sidebar st={st} h={h} />
