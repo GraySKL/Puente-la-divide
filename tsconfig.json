@@ -9,6 +9,9 @@
       "@components/*": ["src/components/*"],
       "@layouts/*": ["src/layouts/*"],
       "@content/*": ["src/content/*"]
-    }
+    },
+    // The only JSX in this repo is the Preact app island under src/app/.
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   }
 }

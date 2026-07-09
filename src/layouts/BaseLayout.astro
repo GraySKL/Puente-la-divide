@@ -10,10 +10,18 @@ interface Props {
 
 const { locale, title, description } = Astro.props;
 const strings = t(locale);
-const pageTitle = title ? `${title} — ${strings.siteName}` : strings.siteName;
+// The shared chrome (this header/title) reflects the site-wide rebrand to
+// "Puente la Divide"; page content below (scenarios, phrases, nav labels,
+// disclaimer) is the original Puente / Bridge MVP copy and is left untouched.
+const BRAND = 'Puente la Divide';
+const pageTitle = title ? `${title} — ${BRAND}` : BRAND;
 const pageDesc = description ?? strings.tagline;
 const otherLocale: Locale = locale === 'en' ? 'es' : 'en';
 const otherLocaleHref = Astro.url.pathname.replace(/^\/(en|es)(\/|$)/, `/${otherLocale}$2`);
+// BASE_URL doesn't reliably keep its trailing slash under trailingSlash:
+// 'never' (see astro.config.mjs), so normalize it before concatenating paths.
+const rawBase = import.meta.env.BASE_URL;
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 ---
 <!DOCTYPE html>
 <html lang={locale}>
@@ -23,9 +31,9 @@ const otherLocaleHref = Astro.url.pathname.replace(/^\/(en|es)(\/|$)/, `/${other
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={pageDesc} />
     <meta name="theme-color" content="#0b1020" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}icons/icon.svg`} />
+    <link rel="apple-touch-icon" href={`${base}icons/icon-192.png`} />
     <title>{pageTitle}</title>
   </head>
   <body>
@@ -35,7 +43,7 @@ const otherLocaleHref = Astro.url.pathname.replace(/^\/(en|es)(\/|$)/, `/${other
     <header class="border-b border-[var(--color-border)]">
       <nav class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         <a href={`/${locale}`} class="font-semibold tracking-tight">
-          {strings.siteName}
+          {BRAND}
         </a>
         <div class="flex items-center gap-3 text-sm">
           <a href={`/${locale}`} class="hover:underline">{strings.nav.home}</a>
@@ -55,7 +63,7 @@ const otherLocaleHref = Astro.url.pathname.replace(/^\/(en|es)(\/|$)/, `/${other
     <footer class="max-w-3xl mx-auto px-4 py-8 mt-12 border-t border-[var(--color-border)] text-sm text-[var(--color-muted)]">
       <p class="mb-2">{strings.disclaimer}</p>
       <p class="text-xs">
-        Puente / Bridge — open source.
+        {BRAND} — open source.
         <a class="underline" href="https://www.ilrc.org/redcards">ILRC</a>,
         <a class="underline" href="https://www.nilc.org/resources/know-your-rights-card/">NILC</a>,
         <a class="underline" href="https://www.aclu.org/know-your-rights/immigrants-rights">ACLU</a>,

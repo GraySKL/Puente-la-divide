@@ -1,4 +1,4 @@
-# Puente / Bridge
+# Puente la Divide (formerly Puente / Bridge)
 
 A bilingual Spanish/English Progressive Web App teaching:
 

@@ -1,47 +1,649 @@
 ---
-import '../styles/globals.css';
-import { t } from '../i18n/strings';
-const en = t('en');
-const es = t('es');
+// src/pages/index.astro — Puente la Divide marketing / launch page.
+// Static Astro port of Claude Design/pweb.jsx (Aliento direction). No island:
+// every CTA just links to /app, where the interactive Preact app lives.
+import '@fontsource/nunito/400.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/700.css';
+import '@fontsource/nunito/800.css';
+import { APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, TOPICS } from '../app/data';
+
+// Topic color system (Claude Design/kit.jsx) — duplicated here in plain TS
+// (not imported from app/ui.tsx) so this static page never pulls in Preact.
+const OK = (l: number, c: number, h: number) => `oklch(${l} ${c} ${h})`;
+const topicInk = (h: number) => OK(0.46, 0.1, h);
+const topicMid = (h: number) => OK(0.62, 0.12, h);
+const topicSoft = (h: number) => OK(0.93, 0.035, h);
+
+// BASE_URL doesn't reliably keep its trailing slash under trailingSlash:
+// 'never' (see astro.config.mjs), so normalize it before concatenating paths.
+const rawBase = import.meta.env.BASE_URL;
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+const appHref = `${base}app`;
+const classicHref = `${base}en`;
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="Bilingual Know Your Rights — for ICE encounters." />
-    <meta name="theme-color" content="#0b1020" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
-    <title>Puente / Bridge — Know Your Rights / Conozca sus derechos</title>
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="description"
+      content="Aprende el inglés que de verdad necesitas y conoce tus derechos en cada paso. Gratis, sin cuenta, funciona sin internet. / Learn the English you actually need and know your rights along the way. Free, no account, works offline."
+    />
+    <meta name="theme-color" content="#fbfaf7" />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}icons/icon.svg`} />
+    <title>Puente la Divide — bridge the divide</title>
   </head>
   <body>
-    <main class="max-w-xl mx-auto px-4 py-12 min-h-screen flex flex-col justify-center">
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">Puente / Bridge</h1>
-      <p class="text-base text-[var(--color-muted)] mb-1" lang="en">{en.tagline}</p>
-      <p class="text-base text-[var(--color-muted)] mb-8" lang="es">{es.tagline}</p>
-
-      <h2 class="text-sm uppercase tracking-wide text-[var(--color-muted)] mb-3">
-        {en.chooseLanguage} · {es.chooseLanguage}
-      </h2>
-
-      <div class="grid gap-3">
-        <a href="/es"
-           class="block bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 hover:border-amber-500 transition-colors"
-           lang="es">
-          <div class="text-xl font-medium">Hablo español</div>
-          <div class="text-sm text-[var(--color-muted)] mt-1">Quiero aprender mis derechos y las palabras en inglés.</div>
+    <header class="nav">
+      <div class="nav-inner">
+        <a class="brand" href={base}>
+          <span class="brand-mark">P</span>
+          Puente <span class="brand-dim">la Divide</span>
         </a>
-        <a href="/en"
-           class="block bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 hover:border-amber-500 transition-colors"
-           lang="en">
-          <div class="text-xl font-medium">I speak English</div>
-          <div class="text-sm text-[var(--color-muted)] mt-1">I'm here to help — I want to learn the words in Spanish.</div>
-        </a>
+        <nav class="nav-links">
+          <a href="#como">Cómo funciona</a>
+          <a href="#situaciones">Situaciones</a>
+          <a href="#descargar">Descargar</a>
+          <a class="btn-try" href={appHref}>Probar ahora</a>
+        </nav>
       </div>
+    </header>
 
-      <p class="mt-10 text-xs text-[var(--color-muted)]" lang="en">{en.disclaimer}</p>
-      <p class="mt-2 text-xs text-[var(--color-muted)]" lang="es">{es.disclaimer}</p>
+    <main>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="badge">💛 Gratis, para siempre</span>
+          <h1>Aprende el inglés que de verdad necesitas.</h1>
+          <p class="subtitle">Y conoce tus derechos en cada paso del camino — practicando con una guía, no con un libro.</p>
+          <div class="cta-row">
+            <a class="pill pill-primary" href={appHref}>Probar en el navegador →</a>
+            <a class="pill pill-ghost" href={appHref}>Descargar gratis</a>
+          </div>
+          <div class="trust-row">
+            <span>✓ Sin cuenta</span><span>✓ Sin internet</span><span>✓ Modo discreto</span>
+          </div>
+        </div>
+
+        <!-- Static preview of the Home screen — not the live app (that lives at /app). -->
+        <div class="phone-mock" aria-hidden="true">
+          <div class="phone-mock-inner">
+            <div class="mock-row">
+              <span class="mock-avatar"></span>
+              <div class="mock-greeting">
+                <div class="mock-greeting-sub">Buenos días,</div>
+                <div class="mock-greeting-name">Rosa 👋</div>
+              </div>
+              <span class="mock-chip">● Sin red</span>
+            </div>
+            <div class="mock-continue" style={`background:${topicSoft(TOPICS.parada.hue)}`}>
+              <div class="mock-continue-label" style={`color:${topicInk(TOPICS.parada.hue)}`}>SEGUIR · LA PARADA</div>
+              <div class="mock-continue-title">Cuando te piden la licencia</div>
+              <div class="mock-progress"><span style={`width:50%;background:${topicMid(TOPICS.parada.hue)}`}></span></div>
+            </div>
+            <div class="mock-grid">
+              {APP_TOPICS.map((k) => {
+                const t = TOPICS[k];
+                return (
+                  <div class="mock-card">
+                    <span class="mock-glyph" style={`background:${topicSoft(t.hue)};color:${topicInk(t.hue)}`}>{t.glyph}</span>
+                    <div class="mock-card-title">{t.es}</div>
+                    {LOCKED[k] && <div class="mock-card-sub">🔒 Próximamente</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section id="como" class="how">
+        <div class="section-inner">
+          <div class="eyebrow">Cómo funciona</div>
+          <h2 class="section-title">Una conversación a la vez</h2>
+          <div class="how-grid">
+            <div class="how-card">
+              <div class="how-icon">🗣️</div>
+              <div class="how-card-title">Vive la situación</div>
+              <p>Una parada de tráfico, una clínica, el trabajo. Escenas reales, no listas de palabras.</p>
+            </div>
+            <div class="how-card">
+              <div class="how-icon">💬</div>
+              <div class="how-card-title">Elige qué decir</div>
+              <p>Escucha el inglés, ve el español, y practica tu respuesta en voz alta.</p>
+            </div>
+            <div class="how-card">
+              <div class="how-icon">🛡️</div>
+              <div class="how-card-title">Conoce tu derecho</div>
+              <p>Tía Marisol te recuerda lo que puedes decir —y callar— justo cuando importa.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SITUATIONS -->
+      <section id="situaciones" class="section-inner situations">
+        <h2 class="section-title-left">Para los momentos que importan</h2>
+        <p class="section-lead">Cada situación tiene su propio color y su propia guía.</p>
+        <div class="sit-grid">
+          {APP_TOPICS.map((k) => {
+            const t = TOPICS[k];
+            return (
+              <div class="sit-card">
+                <div class="sit-band" style={`background:${topicMid(t.hue)}`}>{t.glyph}</div>
+                <div class="sit-body">
+                  <div class="sit-title">
+                    {t.es} {LOCKED[k] && <span class="sit-soon">· pronto</span>}
+                  </div>
+                  <div class="sit-sub">{t.en} · {t.note}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <!-- DOWNLOAD -->
+      <section id="descargar" class="download">
+        <div class="section-inner download-inner">
+          <h2 class="section-title">Llévalo contigo</h2>
+          <p class="section-lead">Una vez instalado, funciona aunque te quedes sin señal.</p>
+          <div class="download-row">
+            <a class="download-pill" href={appHref}><span>🍎</span><span><small>Descargar para</small>macOS</span></a>
+            <a class="download-pill" href={appHref}><span>🪟</span><span><small>Descargar para</small>Windows</span></a>
+            <a class="download-pill" href={appHref}><span>📱</span><span><small>Descargar para</small>iPhone</span></a>
+            <a class="download-pill" href={appHref}><span>🤖</span><span><small>Descargar para</small>Android</span></a>
+            <a class="download-pill download-pill-ghost" href={appHref}><span>🌐</span><span><small>Abrir en el</small>Navegador</span></a>
+          </div>
+          <p class="download-note">El contenido de derechos es educativo y se revisa junto a organizaciones legales de inmigración. Puente no da asesoría legal.</p>
+        </div>
+      </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-row">
+          <span class="footer-brand">Puente la Divide</span>
+          <span class="footer-tagline">— bridge the divide</span>
+          <span class="footer-spacer"></span>
+          <a class="footer-link" href={classicHref}>Guías clásicas / Classic guides</a>
+        </div>
+        <p class="disclaimer">{DISCLAIMER_ES}</p>
+        <p class="disclaimer">{DISCLAIMER_EN}</p>
+      </div>
+    </footer>
   </body>
 </html>
+
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --panel: #ffffff;
+    --ink: #2c2824;
+    --dim: rgba(44, 40, 36, 0.55);
+    --faint: rgba(44, 40, 36, 0.4);
+    --sh: 0 8px 24px -10px rgba(60, 50, 40, 0.22);
+    --sh-soft: 0 4px 14px -8px rgba(60, 50, 40, 0.18);
+  }
+  html,
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: rgba(251, 250, 247, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(44, 40, 36, 0.07);
+  }
+  .nav-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 18px;
+  }
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: oklch(0.62 0.12 250);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .brand-dim {
+    color: var(--dim);
+    font-weight: 700;
+  }
+  .nav-links {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 22px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--dim);
+  }
+  .nav-links a:hover {
+    color: var(--ink);
+  }
+  .btn-try {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .hero {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 60px 28px 40px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: oklch(0.93 0.035 75);
+    color: oklch(0.46 0.1 75);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-weight: 800;
+    font-size: 12px;
+  }
+  h1 {
+    font-weight: 800;
+    font-size: 48px;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    margin: 18px 0 0;
+  }
+  .subtitle {
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.4;
+    color: var(--dim);
+    margin: 16px 0 0;
+    max-width: 460px;
+    font-style: italic;
+  }
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .pill {
+    border: none;
+    cursor: pointer;
+    border-radius: 16px;
+    padding: 15px 20px;
+    font-weight: 800;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .pill-primary {
+    background: oklch(0.62 0.12 250);
+    color: #fff;
+    box-shadow: var(--sh-soft);
+  }
+  .pill-ghost {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px rgba(44, 40, 36, 0.18);
+  }
+  .trust-row {
+    display: flex;
+    gap: 18px;
+    margin-top: 22px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--dim);
+  }
+
+  .phone-mock {
+    display: flex;
+    justify-content: center;
+  }
+  .phone-mock-inner {
+    width: 280px;
+    border-radius: 28px;
+    background: var(--bg);
+    box-shadow: 0 30px 60px -20px rgba(40, 30, 20, 0.35), 0 0 0 8px #1b1714;
+    padding: 16px 14px;
+  }
+  .mock-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mock-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    background: repeating-linear-gradient(135deg, rgba(44, 40, 36, 0.08) 0 4px, transparent 4px 8px);
+    border: 1.5px solid rgba(0, 0, 0, 0.1);
+  }
+  .mock-greeting {
+    flex: 1;
+    min-width: 0;
+  }
+  .mock-greeting-sub {
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .mock-greeting-name {
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .mock-chip {
+    font-weight: 700;
+    font-size: 9px;
+    color: oklch(0.46 0.1 155);
+    background: oklch(0.93 0.035 155);
+    padding: 4px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .mock-continue {
+    margin-top: 14px;
+    border-radius: 16px;
+    padding: 12px 14px;
+  }
+  .mock-continue-label {
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+  .mock-continue-title {
+    font-weight: 800;
+    font-size: 14px;
+    margin-top: 3px;
+  }
+  .mock-progress {
+    height: 6px;
+    border-radius: 5px;
+    background: #fff;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .mock-progress span {
+    display: block;
+    height: 100%;
+    border-radius: 5px;
+  }
+  .mock-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mock-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--sh-soft);
+    padding: 10px 11px 12px;
+  }
+  .mock-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .mock-card-title {
+    font-weight: 800;
+    font-size: 11px;
+    margin-top: 7px;
+  }
+  .mock-card-sub {
+    font-weight: 600;
+    font-size: 8.5px;
+    color: var(--dim);
+    margin-top: 1px;
+  }
+
+  .section-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 54px 28px;
+  }
+  .eyebrow {
+    text-align: center;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .section-title {
+    text-align: center;
+    font-weight: 800;
+    font-size: 32px;
+    margin: 10px 0 36px;
+  }
+  .section-title-left {
+    font-weight: 800;
+    font-size: 28px;
+    margin: 0 0 6px;
+  }
+  .section-lead {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--dim);
+    margin: 0 0 26px;
+  }
+
+  .how {
+    background: var(--panel);
+    border-top: 1px solid rgba(44, 40, 36, 0.07);
+    border-bottom: 1px solid rgba(44, 40, 36, 0.07);
+  }
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+  .how-card {
+    background: var(--bg);
+    border-radius: 20px;
+    padding: 24px 22px;
+  }
+  .how-icon {
+    font-size: 32px;
+  }
+  .how-card-title {
+    font-weight: 800;
+    font-size: 18px;
+    margin-top: 12px;
+  }
+  .how-card p {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--dim);
+    margin: 8px 0 0;
+  }
+
+  .sit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .sit-card {
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--sh);
+  }
+  .sit-band {
+    height: 76px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: #fff;
+    font-size: 28px;
+  }
+  .sit-body {
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .sit-title {
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .sit-soon {
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--faint);
+  }
+  .sit-sub {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .download {
+    background: oklch(0.93 0.035 250);
+  }
+  .download-inner {
+    text-align: center;
+  }
+  .download-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .download-pill {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    background: #fff;
+    box-shadow: var(--sh);
+    border-radius: 14px;
+    padding: 12px 18px;
+    font-size: 22px;
+  }
+  .download-pill-ghost {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px rgba(44, 40, 36, 0.2);
+  }
+  .download-pill span:last-child {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .download-pill small {
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--dim);
+  }
+  .download-note {
+    margin: 26px auto 0;
+    max-width: 560px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--dim);
+  }
+
+  .site-footer {
+    background: var(--bg);
+  }
+  .footer-inner {
+    padding-top: 30px;
+    padding-bottom: 50px;
+  }
+  .footer-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .footer-brand {
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .footer-tagline {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--faint);
+  }
+  .footer-spacer {
+    flex: 1;
+  }
+  .footer-link {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--dim);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .disclaimer {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--faint);
+    margin: 10px 0 0;
+    max-width: 640px;
+  }
+
+  @media (max-width: 860px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+    .phone-mock {
+      order: -1;
+    }
+    h1 {
+      font-size: 36px;
+    }
+    .how-grid,
+    .sit-grid {
+      grid-template-columns: 1fr;
+    }
+    .nav-links {
+      gap: 12px;
+      font-size: 13px;
+    }
+  }
+</style>

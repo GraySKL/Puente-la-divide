@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Puente / Bridge">
-  <rect width="512" height="512" rx="96" fill="#0b1020"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Puente la Divide">
+  <!-- Aliento palette: ink background, "parada" topic hue (oklch(0.62 0.12 250)) for the bridge. -->
+  <rect width="512" height="512" rx="96" fill="#2c2824"/>
   <!-- Bridge: two pillars + an arched span -->
-  <g stroke="#f59e0b" stroke-width="22" stroke-linecap="round" fill="none">
+  <g stroke="#7d84c7" stroke-width="22" stroke-linecap="round" fill="none">
     <path d="M 88 360 L 88 200" />
     <path d="M 424 360 L 424 200" />
     <path d="M 64 360 L 448 360" />

@@ -1,0 +1,54 @@
+---
+// src/pages/app.astro — mounts the Puente la Divide interactive app.
+// This page IS the app, edge to edge: no shared site chrome (BaseLayout is
+// for the classic /en /es Know-Your-Rights pages, which stay untouched).
+// Self-hosted Nunito only — no runtime font CDNs (see project CLAUDE.md).
+import '@fontsource/nunito/400.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/700.css';
+import '@fontsource/nunito/800.css';
+import App from '../app/app';
+
+// BASE_URL doesn't reliably keep its trailing slash under trailingSlash:
+// 'never' (see astro.config.mjs), so normalize it before concatenating paths.
+const rawBase = import.meta.env.BASE_URL;
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+---
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="description"
+      content="Practica el inglés que necesitas y conoce tus derechos, sin cuenta y sin internet. / Practice the English you need and know your rights — no account, no internet required."
+    />
+    <meta name="theme-color" content="#fbfaf7" />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}icons/icon.svg`} />
+    <link rel="apple-touch-icon" href={`${base}icons/icon-192.png`} />
+    <title>Puente la Divide</title>
+  </head>
+  <body>
+    <div id="app-root">
+      <App client:only="preact" />
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #fbfaf7;
+    color: #2c2824;
+  }
+  #app-root {
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+  }
+</style>

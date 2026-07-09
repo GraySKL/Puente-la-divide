@@ -1,5 +1,9 @@
 ---
 import '../styles/globals.css';
+// BASE_URL doesn't reliably keep its trailing slash under trailingSlash:
+// 'never' (see astro.config.mjs), so normalize it before concatenating paths.
+const rawBase = import.meta.env.BASE_URL;
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -7,20 +11,21 @@ import '../styles/globals.css';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1020" />
-    <title>Offline — Puente / Bridge</title>
+    <title>Offline — Puente la Divide</title>
   </head>
   <body>
     <main class="max-w-xl mx-auto px-4 py-12 min-h-screen flex flex-col justify-center">
       <h1 class="text-2xl font-semibold mb-3">You're offline / Está sin conexión</h1>
       <p class="text-[var(--color-muted)] mb-2" lang="en">
-        This page hasn't been visited and saved yet. Visit the home, scenarios, and practice pages once with internet so they work offline next time.
+        This page hasn't been visited and saved yet. Visit the app, home, scenarios, and practice pages once with internet so they work offline next time.
       </p>
       <p class="text-[var(--color-muted)]" lang="es">
-        Esta página aún no ha sido visitada y guardada. Visite la página principal, los escenarios y la práctica una vez con internet para que funcionen sin conexión la próxima vez.
+        Esta página aún no ha sido visitada y guardada. Visite la app, la página principal, los escenarios y la práctica una vez con internet para que funcionen sin conexión la próxima vez.
       </p>
-      <div class="mt-6 flex gap-2">
-        <a href="/en" class="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium">English</a>
-        <a href="/es" class="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium">Español</a>
+      <div class="mt-6 flex gap-2 flex-wrap">
+        <a href={`${base}app`} class="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium">App</a>
+        <a href={`${base}en`} class="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium">English</a>
+        <a href={`${base}es`} class="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium">Español</a>
       </div>
     </main>
   </body>

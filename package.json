@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Bilingual ES/EN PWA teaching Know-Your-Rights for ICE encounters and allyship.",
+  "description": "Puente la Divide — bilingual ES/EN PWA teaching survival English and Know-Your-Rights for ICE encounters. Offline-first, no accounts, no tracking.",
   "license": "MIT",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
@@ -13,13 +13,19 @@
     "check": "astro check"
   },
   "dependencies": {
-    "astro": "^5.0.0",
     "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^4.0.0",
+    "@astrojs/preact": "^4.1.3",
+    "@fontsource/nunito": "^5.2.7",
     "@tailwindcss/vite": "^4.0.0",
     "@vite-pwa/astro": "^0.5.0",
+    "astro": "^5.0.0",
+    "preact": "^10.29.7",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.5.0",
     "workbox-window": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
   }
 }
