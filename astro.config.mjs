@@ -26,7 +26,9 @@ export default defineConfig({
     mdx(),
     // Powers the Puente la Divide interactive app island (src/app/**) only —
     // jsx compilation is scoped there so it never touches the .astro pages.
-    preact({ include: ['src/app/**/*'] }),
+    // .tsx only: a bare src/app/**/* would also route .json imports (e.g.
+    // audio-manifest.json) through the JSX compiler and break the build.
+    preact({ include: ['src/app/**/*.tsx'] }),
     AstroPWA({
       registerType: 'autoUpdate',
       // Service worker is for OFFLINE CACHING ONLY. Do not add anything that calls home.

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'preact/hooks';
 import {
   APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, ONBOARDING, PHRASES, RIGHTS, TOPICS, type TopicKey,
 } from './data';
-import { C, Glyph, Guia, Pill, ProgressBar, speak, speakEs, topicEdge, topicInk, topicMid, topicSoft } from './ui';
+import { C, Glyph, Guia, Pill, ProgressBar, speak, speakEs, speakSeq, topicEdge, topicInk, topicMid, topicSoft } from './ui';
 
 // ---------- ONBOARDING ----------
 export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean }) {
@@ -145,7 +145,7 @@ export function RightsCard({ onClose, topic = 'parada' }: { onClose: () => void;
   const hue = TOPICS[topic].hue;
   const enSize = big ? 27 : 21;
   const esSize = big ? 18 : 15;
-  const readAll = () => speak(RIGHTS.map((r) => r.en).join('. '));
+  const readAll = () => speakSeq(RIGHTS.map((r) => r.en));
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: topicSoft(hue) }}>
       <div style={{ flex: '0 0 auto', padding: '12px 22px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

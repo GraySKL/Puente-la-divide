@@ -181,7 +181,9 @@ export const DISCLAIMER_ES = 'Esto es información general, no asesoría legal. 
 // on screen (this deck's Spanish wording is often paraphrased differently
 // from core-rights.json, e.g. "guardar silencio" vs "permanecer en
 // silencio" — those intentionally fall back to on-device TTS instead).
-function normalizeEs(s: string): string {
+// MUST stay in sync with normalize() in scripts/generate-app-audio.py — the
+// pre-generated audio manifest is keyed by this exact normalization.
+export function normalizeSpoken(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFC')
@@ -192,10 +194,10 @@ function normalizeEs(s: string): string {
 
 const SPANISH_AUDIO_BY_TEXT: Record<string, string> = {};
 for (const p of coreRights.phrases) {
-  SPANISH_AUDIO_BY_TEXT[normalizeEs(p.es)] = p.id;
+  SPANISH_AUDIO_BY_TEXT[normalizeSpoken(p.es)] = p.id;
 }
 
 /** Slug of a pre-generated public/audio/es/<slug>.mp3, if this exact Spanish phrase has one. */
 export function spanishAudioSlug(es: string): string | undefined {
-  return SPANISH_AUDIO_BY_TEXT[normalizeEs(es)];
+  return SPANISH_AUDIO_BY_TEXT[normalizeSpoken(es)];
 }

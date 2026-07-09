@@ -1,0 +1,29 @@
+{
+  "en": {
+    "license and registration please": "en/officer-license.mp3",
+    "where were you born": "en/officer-born.mp3",
+    "are you a citizen": "en/officer-citizen.mp3",
+    "do you have insurance": "en/reception-insurance.mp3",
+    "what brings you in today": "en/reception-brings.mp3",
+    "here you are officer": "en/learner-here-you-are.mp3",
+    "why did you stop me": "en/learner-why-stop.mp3",
+    "i prefer not to answer": "en/learner-prefer-not.mp3",
+    "i want to remain silent": "en/learner-remain-silent.mp3",
+    "am i free to go": "en/learner-free-to-go.mp3",
+    "i don't have insurance": "en/learner-no-insurance.mp3",
+    "can we talk about payment later": "en/learner-payment-later.mp3",
+    "i have strong chest pain": "en/learner-chest-pain.mp3",
+    "i need to see a doctor please": "en/learner-see-doctor-please.mp3",
+    "i need to see a doctor": "en/learner-see-doctor.mp3",
+    "it hurts here": "en/learner-hurts-here.mp3",
+    "i do not consent to a search": "en/learner-no-consent-search.mp3",
+    "i want to speak to a lawyer": "en/learner-speak-lawyer.mp3",
+    "i do not wish to answer questions": "en/learner-no-answer-questions.mp3"
+  },
+  "es": {
+    "aquí tiene oficial": "es/app-aqui-tiene.mp3",
+    "necesito ver a un doctor": "es/app-ver-doctor.mp3",
+    "me duele aquí": "es/app-me-duele.mp3",
+    "podemos hablar del pago después": "es/app-pago-despues.mp3"
+  }
+}
