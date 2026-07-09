@@ -31,3 +31,7 @@ Thumbs.db
 dev-dist/
 sw.js
 workbox-*.js
+
+# Not part of the app
+claude-code-token-aware-guide.pdf
+Claude Design/NE Wake Dems*

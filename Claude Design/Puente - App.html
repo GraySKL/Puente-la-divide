@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Puente la Divide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,500&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #efe9e0; font-family: "Nunito", system-ui; }
+  * { box-sizing: border-box; }
+  #root { height: 100%; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: rgba(44,40,36,0.18); border-radius: 9px; }
+  @keyframes puentePulse { 0% { transform: scale(0.85); opacity: 0.45; } 100% { transform: scale(1.7); opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="kit.jsx"></script>
+<script type="text/babel" src="pdata.jsx"></script>
+<script type="text/babel" src="pui.jsx"></script>
+<script type="text/babel" src="pspeak.jsx"></script>
+<script type="text/babel" src="pscenario.jsx"></script>
+<script type="text/babel" src="pscreens.jsx"></script>
+<script type="text/babel" src="papp.jsx"></script>
+<script type="text/babel" src="pweb.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  function useFit(w, h, padX, padY) {
+    const calc = () => Math.min((window.innerWidth - padX) / w, (window.innerHeight - padY) / h, 1);
+    const [s, setS] = useState(calc);
+    useEffect(() => { const r = () => setS(calc()); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r); }, []);
+    return s;
+  }
+
+  function Device({ w, h, children, padY }) {
+    const s = useFit(w, h, 60, padY);
+    return (
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(120% 120% at 50% 0%, #f4efe7, #e6ddd0)' }}>
+        <div style={{ width: w * s, height: h * s }}>
+          <div style={{ width: w, height: h, transform: `scale(${s})`, transformOrigin: 'top left' }}>{children}</div>
+        </div>
+      </div>
+    );
+  }
+
+  function Switcher({ value, onChange }) {
+    const items = [['web', '🌐 Sitio web'], ['phone', '📱 Teléfono'], ['desktop', '🖥️ Escritorio']];
+    return (
+      <div data-omelette-chrome="" style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 50,
+        display: 'flex', gap: 4, background: 'rgba(28,24,20,0.9)', backdropFilter: 'blur(10px)', padding: 5, borderRadius: 999, boxShadow: '0 12px 30px -8px rgba(0,0,0,0.45)' }}>
+        {items.map(([k, l]) => (
+          <button key={k} onClick={() => onChange(k)} style={{ border: 'none', cursor: 'pointer', borderRadius: 999, padding: '9px 16px', whiteSpace: 'nowrap',
+            font: '800 13px "Nunito", system-ui', color: value === k ? '#2c2824' : 'rgba(255,255,255,0.7)', background: value === k ? '#fff' : 'transparent' }}>{l}</button>
+        ))}
+      </div>
+    );
+  }
+
+  function Root() {
+    const [surface, setSurface] = useState('web');
+    return (
+      <div style={{ height: '100%' }}>
+        {surface === 'web' && <Website onTry={() => setSurface('phone')} onDownload={() => setSurface('desktop')} />}
+        {surface === 'phone' && <Device w={393} h={852} padY={120}><PhoneApp /></Device>}
+        {surface === 'desktop' && <Device w={1100} h={720} padY={120}><DesktopApp /></Device>}
+        <Switcher value={surface} onChange={setSurface} />
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
