@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'android/**'
+      - 'astro.config.mjs'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to publish the test-latest release
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      # Capacitor bundles the site inside the APK, so base stays '/'
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk puente-la-divide.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puente-la-divide-apk
+          path: puente-la-divide.apk
+      # Rolling prerelease so testers always have one stable download link.
+      # Debug-signed: testers must uninstall the previous build before updating.
+      - name: Publish test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create test-latest --prerelease \
+            --title "Puente la Divide — test build" \
+            --notes "Latest Android test build. Download the APK below, open it on your phone, and allow installs from your browser when asked. Uninstall any previous test build first." \
+            || true
+          gh release upload test-latest puente-la-divide.apk --clobber
