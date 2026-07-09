@@ -61,6 +61,27 @@ export function ScenarioRunner({
           </GuiaBubble>
         </div>,
       );
+    } else if (s.t === 'docs') {
+      // Annotated sample documents (e.g. real vs. ICE warrant) — precached
+      // pngs, so they render offline like everything else.
+      const rawBase = import.meta.env.BASE_URL;
+      const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+      rows.push(
+        <div key={i} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {s.items.map((d, j) => (
+            <div key={j} style={{ background: '#fff', borderRadius: 18, boxShadow: C.sh, overflow: 'hidden' }}>
+              <img src={`${base}${d.src}`} alt={d.alt} loading="lazy" style={{ display: 'block', width: '100%', height: 'auto' }} />
+              <div style={{ padding: '12px 16px 14px' }}>
+                <div style={{ font: `700 14px/1.45 ${C.round}`, color: C.ink }}>{d.es}</div>
+                <div style={{ font: `600 12px/1.45 ${C.round}`, color: C.dim, marginTop: 4 }}>{d.en}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ font: `600 10.5px ${C.round}`, color: C.faint, textAlign: 'center' }}>
+            {s.creditEs} · {s.creditEn}
+          </div>
+        </div>,
+      );
     } else if (s.t === 'speak') {
       rows.push(
         <div key={`${i}sp`} style={{ padding: '8px 0' }}>

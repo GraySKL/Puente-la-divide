@@ -61,6 +61,7 @@ export type ScenarioStep =
   | { t: 'say'; who: string; en: string; es: string }
   | { t: 'choose'; prompt: string; options: ChooseOption[] }
   | { t: 'speak'; target: Phrase }
+  | { t: 'docs'; items: { src: string; es: string; en: string; alt: string }[]; creditEs: string; creditEn: string }
   | { t: 'recap'; es: string; learned: Phrase[] };
 
 export interface Scenario {
@@ -238,6 +239,13 @@ export const SCENARIOS: Partial<Record<TopicKey, Scenario>> = {
       // hosts annotated example documents (judicial vs. I-200 marked "NOT
       // VALID… not signed by a judge"): https://www.acluofnorthcarolina.org/know-your-rights/kyr-ir/
       { t: 'tip', es: 'Hay una diferencia enorme entre dos papeles que pueden parecerse. Una orden JUDICIAL —firmada por un juez, con tu nombre y tu dirección correctos— sí permite la entrada. Una orden ADMINISTRATIVA de ICE —los formularios I-200 o I-205, firmados por un oficial de inmigración o por un juez de inmigración— NO permite la entrada sin tu permiso.', en: 'There is a huge difference between two papers that can look alike. A JUDICIAL warrant — signed by a judge, with your correct name and address — does authorize entry. An ICE ADMINISTRATIVE warrant — Forms I-200 or I-205, signed by an immigration officer or an immigration judge — does NOT authorize entry without your permission.' },
+      // Annotated sample documents (added by Sara 2026-07-09) from ACLU of
+      // South Carolina — ACLU state affiliate, owner-approved source:
+      // https://www.aclusc.org/immigration-enforcement-administrative-vs-judicial-warrants/
+      { t: 'docs', items: [
+        { src: 'img/warrants/ice-administrative-i200-sample.png', es: 'Así se ve un Formulario I-200 de ICE — lo firma un oficial de inmigración. NO autoriza la entrada a tu casa.', en: 'This is what an ICE Form I-200 looks like — signed by an immigration officer. It does NOT authorize entry into your home.', alt: 'Sample ICE Form I-200 administrative warrant, annotated by the ACLU' },
+        { src: 'img/warrants/judicial-warrant-sample.png', es: 'Así se ve una orden JUDICIAL de un tribunal — la firma un juez e incluye tu nombre y dirección correctos.', en: 'This is what a JUDICIAL court warrant looks like — signed by a judge, with your correct name and address.', alt: 'Sample judicial search warrant from a United States District Court, annotated by the ACLU' },
+      ], creditEs: 'Ejemplos anotados: ACLU de Carolina del Sur', creditEn: 'Annotated samples: ACLU of South Carolina' },
       { t: 'choose', prompt: '¿Qué dices?', options: [
         { en: 'I do not consent to your entry.', es: 'No doy mi consentimiento para su entrada.', tone: 'best', reply: 'Exacto. Un Formulario I-200 lo firma un oficial de ICE, no un juez — no autoriza la entrada sin tu permiso.' },
         { en: 'Is that a judicial warrant signed by a judge, or an administrative warrant?', es: '¿Es esa una orden judicial firmada por un juez, o una orden administrativa?', tone: 'good', reply: 'También puedes preguntarlo primero. Saber qué tienes enfrente te ayuda a decidir con calma.' },
