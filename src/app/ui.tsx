@@ -10,7 +10,7 @@
 // on-device "listen & repeat" replacement.
 import { useState } from 'preact/hooks';
 import type { ComponentChildren, JSX } from 'preact';
-import { TOPICS, normalizeSpoken, spanishAudioSlug, type TopicKey } from './data';
+import { TOPICS, normalizeSpoken, spanishAudioSlug, type GuidePref, type TopicKey } from './data';
 import audioManifest from './audio-manifest.json';
 
 // Theme tokens resolve to CSS custom properties defined on .pd-app in
@@ -48,6 +48,27 @@ export const topicMid = (h: number) => `var(--t${hueOrFallback(h)}-mid)`; // viv
 export const topicSoft = (h: number) => `var(--t${hueOrFallback(h)}-soft)`; // wash
 export const topicEdge = (h: number) => `var(--t${hueOrFallback(h)}-edge)`; // hairline
 
+// ---- learner voice preference — F or M, applies ONLY to the learner's own
+// lines (practice phrases, choices, rights card), never to character voices
+// (officer, receptionist, Tía Marisol, Aria narration). Set from app.tsx on
+// load and whenever the user changes it in Settings/Onboarding; read
+// synchronously by speak()/_clipFor() so we never touch localStorage on the
+// hot path. See CLAUDE.md threat model — this is in-memory only.
+export type VoicePref = 'f' | 'm';
+let _voicePref: VoicePref = 'f';
+export function setVoicePref(v: VoicePref) {
+  _voicePref = v;
+}
+
+// ---- guide voice preference — Tía Marisol (default, F) or Tío Mateo (M).
+// Same idea as VoicePref above, but for the GUIDE's lines, not the learner's.
+// Set from app.tsx on load and whenever the user changes it (Settings only —
+// never during onboarding, no autoplay before a gesture there).
+let _guidePref: GuidePref = 'marisol';
+export function setGuidePref(v: GuidePref) {
+  _guidePref = v;
+}
+
 // ---- on-device speech synthesis — English + Spanish, never touches the network ----
 let _voices: SpeechSynthesisVoice[] = [];
 const _voiceCache: Record<string, SpeechSynthesisVoice | null> = {};
@@ -71,9 +92,25 @@ if (typeof window !== 'undefined' && typeof speechSynthesis !== 'undefined') {
   }, 250);
 }
 
+// Light gender heuristic for the ENGLISH learner-voice fallback only (device
+// speechSynthesis, used when no pre-generated clip matches). This is a
+// best-effort nudge by voice *name*, not a guarantee: unlike the shipped
+// clips (which are cast per-role, see generate-app-audio.py's RULE comment),
+// this heuristic is purely text-keyed and has no notion of "this is a
+// learner line vs a character line" — it just biases device-voice choice
+// toward the requested gender so a fallback utterance still sounds roughly
+// right. If no device voice matches, scoring falls back to the existing
+// naturalness-only behavior unchanged.
+const FEMALE_VOICE_NAMES = /(jenny|aria|zira|samantha|susan|female|ava|allison|kate|karen|moira|tessa|nova|serena)/;
+const MALE_VOICE_NAMES = /(guy|andrew|david|mark|christopher|male|alex|daniel|fred|george|ryan|eric|brian|roger)/;
+// Same idea, Spanish device voices — biases the guide's TTS fallback toward
+// Marisol (F) or Mateo (M) when no pre-generated clip matches (see GuidePref).
+const FEMALE_VOICE_NAMES_ES = /(dalia|paloma|m[óo]nica|paulina|helena|laura|elvira|sabina|marisol)/;
+const MALE_VOICE_NAMES_ES = /(jorge|alonso|juan|mateo)/;
+
 // Rank a voice for naturalness. We never hit the network; we just pick the
 // best engine already installed on the device, which keeps TTS offline.
-function _scoreVoice(v: SpeechSynthesisVoice, lang2: string): number {
+function _scoreVoice(v: SpeechSynthesisVoice, lang2: string, pref?: VoicePref): number {
   if (!v || !v.lang) return -1;
   const vl = v.lang.toLowerCase().replace('_', '-');
   if (!vl.startsWith(lang2)) return -1;
@@ -92,21 +129,35 @@ function _scoreVoice(v: SpeechSynthesisVoice, lang2: string): number {
   if (lang2 === 'es' && vl === 'es-es') s += 4;
   if (v.localService) s += 5;
   if (/(compact|eloquence|fred|albert|zarvox|trinoids|cellos|bells|bahh|boing|jester|wobble|whisper)/.test(n)) s -= 40;
+  if (pref && lang2 === 'en') {
+    if (pref === 'f' && FEMALE_VOICE_NAMES.test(n)) s += 20;
+    if (pref === 'm' && MALE_VOICE_NAMES.test(n)) s += 20;
+  }
+  if (pref && lang2 === 'es') {
+    if (pref === 'f' && FEMALE_VOICE_NAMES_ES.test(n)) s += 20;
+    if (pref === 'm' && MALE_VOICE_NAMES_ES.test(n)) s += 20;
+  }
   return s;
 }
 
 function _pickVoice(lang2: string): SpeechSynthesisVoice | null {
-  if (lang2 in _voiceCache) return _voiceCache[lang2];
+  // English: the learner-voice preference. Spanish: the guide-voice
+  // preference (Marisol=F default, Mateo=M) — see VoicePref/GuidePref above.
+  let pref: VoicePref | undefined;
+  if (lang2 === 'en') pref = _voicePref;
+  else if (lang2 === 'es') pref = _guidePref === 'mateo' ? 'm' : 'f';
+  const cacheKey = pref ? `${lang2}:${pref}` : lang2;
+  if (cacheKey in _voiceCache) return _voiceCache[cacheKey];
   let best: SpeechSynthesisVoice | null = null;
   let bestScore = -1;
   for (const v of _voices) {
-    const sc = _scoreVoice(v, lang2);
+    const sc = _scoreVoice(v, lang2, pref);
     if (sc > bestScore) {
       bestScore = sc;
       best = v;
     }
   }
-  _voiceCache[lang2] = best;
+  _voiceCache[cacheKey] = best;
   return best;
 }
 
@@ -155,13 +206,29 @@ function _playClip(relPath: string, onFail: () => void, onEnded?: () => void) {
 
 /** Pre-generated neural clips for every audible app line, keyed by
  *  normalized text — one distinct voice per character (officer, receptionist,
- *  learner, Tía Marisol). Generated by scripts/generate-app-audio.py; the
- *  mp3s ship in the bundle, so playback is fully offline. */
+ *  learner, guide). Generated by scripts/generate-app-audio.py; the mp3s ship
+ *  in the bundle, so playback is fully offline.
+ *
+ *  `en_male`/`es_male` are SEPARATE maps containing ONLY the learner's own
+ *  lines / the guide's own lines respectively (see generate-app-audio.py's
+ *  RULE comment) — fixed character lines (officer, receptionist) are never
+ *  in either, so the preferences below can never accidentally re-voice them
+ *  or the Aria narration. This is the guarantee the text-keyed TTS-fallback
+ *  heuristic above cannot make. */
 const CLIPS: Record<string, Record<string, string>> = audioManifest;
 
 function _clipFor(text: string, lang: string): string | undefined {
   const lang2 = lang.slice(0, 2).toLowerCase();
-  return CLIPS[lang2]?.[normalizeSpoken(text)];
+  const key = normalizeSpoken(text);
+  if (lang2 === 'en' && _voicePref === 'm') {
+    const maleClip = CLIPS.en_male?.[key];
+    if (maleClip) return maleClip;
+  }
+  if (lang2 === 'es' && _guidePref === 'mateo') {
+    const maleClip = CLIPS.es_male?.[key];
+    if (maleClip) return maleClip;
+  }
+  return CLIPS[lang2]?.[key];
 }
 
 /** Speak `text` aloud — a pre-generated neural clip when this exact line has
@@ -195,11 +262,20 @@ export function speakSeq(texts: string[], lang = 'en-US') {
  *  over on-device TTS when the exact wording has one — see data.ts
  *  spanishAudioSlug(). Falls back to speechSynthesis otherwise. Both paths
  *  stay fully offline: the mp3s ship in the app bundle and are precached by
- *  the service worker (astro.config.mjs workbox globPatterns). */
+ *  the service worker (astro.config.mjs workbox globPatterns).
+ *
+ *  When the guide is Tío Mateo, tries the male clip (public/audio/es/male/)
+ *  first; if that specific file is missing, falls back to the female clip
+ *  (never straight to silence) before finally falling back to TTS. */
 export function speakEs(es: string) {
   const slug = spanishAudioSlug(es);
   if (slug) {
-    _playClip(`es/${slug}.mp3`, () => _speakTts(es, 'es-MX'));
+    const female = () => _playClip(`es/${slug}.mp3`, () => _speakTts(es, 'es-MX'));
+    if (_guidePref === 'mateo') {
+      _playClip(`es/male/${slug}.mp3`, female);
+    } else {
+      female();
+    }
     return;
   }
   // No core-rights clip — speak() still finds app-level clips via the manifest.
@@ -305,14 +381,21 @@ export function OtherBubble({ who, en, es, hue }: { who: string; en: string; es:
   );
 }
 
-export function GuiaBubble({ children, hue, label = 'Tía Marisol' }: { children: ComponentChildren; hue: number; label?: string }) {
+export function GuiaBubble({
+  children, hue, label = 'Tía Marisol', short = 'Tía',
+}: {
+  children: ComponentChildren;
+  hue: number;
+  label?: string;
+  short?: string;
+}) {
   return (
     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'flex-end' }}>
       <div style={{ background: topicMid(hue), color: '#fff', borderRadius: '20px 20px 6px 20px', padding: '13px 16px', boxShadow: C.sh, maxWidth: 290 }}>
         <div style={{ font: `800 10px ${C.round}`, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.82, marginBottom: 5 }}>💛 {label}</div>
         <div style={{ font: `600 14.5px/1.5 ${C.round}` }}>{children}</div>
       </div>
-      <Guia size={34} ink="#fff" ring="rgba(255,255,255,0.45)" label="Tía" />
+      <Guia size={34} ink="#fff" ring="rgba(255,255,255,0.45)" label={short} />
     </div>
   );
 }

@@ -2,21 +2,25 @@
 // Ported from Claude Design/pscenario.jsx (Preact + TS).
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { SCENARIOS, TOPICS, type TopicKey } from './data';
+import { getGuide, resolveAddress, SCENARIOS, TOPICS, type AddressPref, type GuidePref, type TopicKey } from './data';
 import { C, GuiaBubble, Narration, OtherBubble, Pill, ProgressBar, speak, topicInk, topicSoft, YouBubble } from './ui';
 import { SpeakPractice } from './speak';
 
 export function ScenarioRunner({
-  scenarioKey, onExit, onOpenRights, onComplete, wide,
+  scenarioKey, onExit, onOpenRights, onComplete, wide, guide, name, address,
 }: {
   scenarioKey: TopicKey;
   onExit: () => void;
   onOpenRights: () => void;
   onComplete: (key: TopicKey) => void;
   wide: boolean;
+  guide: GuidePref;
+  name: string;
+  address: AddressPref;
 }) {
   const sc = SCENARIOS[scenarioKey];
   const hue = TOPICS[scenarioKey].hue;
+  const g = getGuide(guide);
   const [step, setStep] = useState(0);
   const [chosen, setChosen] = useState<Record<number, number>>({});
   const [spoken, setSpoken] = useState<Record<number, { heard: string; ok: boolean }>>({});
@@ -49,10 +53,15 @@ export function ScenarioRunner({
         </div>,
       );
     } else if (s.t === 'tip') {
+      // {name} placeholder lets a tip name the guide (e.g. the NIJC family tip
+      // in data.ts) without hardcoding "Tía Marisol" — see getGuide() there.
+      // resolveAddress then resolves any «feminine|masculine» tokens (e.g.
+      // the "La parada" window tip) — a no-op on tips without one.
+      const tipEs = resolveAddress(s.es.includes('{name}') ? s.es.replace('{name}', g.nombre) : s.es, address);
       rows.push(
         <div key={i} style={{ padding: '8px 0' }}>
-          <GuiaBubble hue={hue}>
-            {s.es}
+          <GuiaBubble hue={hue} label={g.nombre} short={g.short}>
+            {tipEs}
             {s.phrase && (
               <div style={{ marginTop: 8, padding: '8px 11px', borderRadius: 12, background: 'rgba(255,255,255,0.18)', font: `800 14px ${C.round}` }}>
                 &ldquo;{s.phrase}&rdquo;
@@ -85,7 +94,7 @@ export function ScenarioRunner({
     } else if (s.t === 'speak') {
       rows.push(
         <div key={`${i}sp`} style={{ padding: '8px 0' }}>
-          <GuiaBubble hue={hue}>Ahora te toca a ti. Intenta decir esta frase en voz alta 👇</GuiaBubble>
+          <GuiaBubble hue={hue} label={g.nombre} short={g.short}>Ahora te toca a ti. Intenta decir esta frase en voz alta 👇</GuiaBubble>
         </div>,
       );
       const done = spoken[i];
@@ -97,7 +106,7 @@ export function ScenarioRunner({
         );
         rows.push(
           <div key={`${i}sr`} style={{ padding: '8px 0' }}>
-            <GuiaBubble hue={hue}>{done.ok ? '¡Perfecto! Esa frase ya suena tuya. 🌿' : 'Muy bien por intentarlo. Cada vez te sale más natural — repítela cuando quieras.'}</GuiaBubble>
+            <GuiaBubble hue={hue} label={g.nombre} short={g.short}>{done.ok ? '¡Perfecto! Esa frase ya suena tuya. 🌿' : 'Muy bien por intentarlo. Cada vez te sale más natural — repítela cuando quieras.'}</GuiaBubble>
           </div>,
         );
       }
@@ -110,16 +119,22 @@ export function ScenarioRunner({
       );
       rows.push(
         <div key={`${i}r`} style={{ padding: '8px 0' }}>
-          <GuiaBubble hue={hue}>{op.reply}</GuiaBubble>
+          <GuiaBubble hue={hue} label={g.nombre} short={g.short}>{resolveAddress(op.reply, address)}</GuiaBubble>
         </div>,
       );
     } else if (s.t === 'recap') {
+      // {learner} is a name-clause placeholder (see the parada recap in
+      // data.ts) — distinct from the {name} placeholder above, which is the
+      // GUIDE's name. Drops the ", {learner}" clause entirely (comma and
+      // all) when no name is set, rather than leaving a dangling ", .".
+      const trimmedName = name.trim();
+      const recapEs = s.es.replace(/,\s*\{learner\}/, trimmedName ? `, ${trimmedName}` : '');
       rows.push(
         <div key={i} style={{ padding: '12px 0 4px' }}>
           <div style={{ background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 22, padding: '22px 20px', boxShadow: C.sh, textAlign: 'center' }}>
             <div style={{ fontSize: 34 }}>🌿</div>
             <div style={{ font: `800 22px/1.2 ${C.round}`, color: C.ink, marginTop: 6 }}>¡Lo lograste!</div>
-            <div style={{ font: `600 14px/1.5 ${C.round}`, color: C.dim, marginTop: 8 }}>{s.es}</div>
+            <div style={{ font: `600 14px/1.5 ${C.round}`, color: C.dim, marginTop: 8 }}>{recapEs}</div>
             <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 9, textAlign: 'left' }}>
               {s.learned.map((p, k) => (
                 <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, background: topicSoft(hue), borderRadius: 14, padding: '11px 14px' }}>

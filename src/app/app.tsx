@@ -9,9 +9,9 @@
 // bar) and a wide layout (sidebar), chosen responsively from viewport width.
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { LOCKED, type TopicKey } from './data';
-import { C, Guia, topicInk, topicMid, topicSoft } from './ui';
-import { ComingSoon, DiscreetCover, Home, NorteCarolina, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
+import { getGuide, LOCKED, type AddressPref, type GuidePref, type TopicKey } from './data';
+import { C, Guia, setGuidePref, setVoicePref, speak, speakEs, topicInk, topicMid, topicSoft, type VoicePref } from './ui';
+import { ComingSoon, DiscreetCover, Home, NameEditor, NorteCarolina, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
 import { ScenarioRunner } from './scenario';
 
 const LS_KEY = 'puente_v1';
@@ -21,11 +21,37 @@ const THEME_ICON: Record<Theme, string> = { auto: '🌗', dark: '🌙', light: '
 const THEME_LABEL: Record<Theme, string> = { auto: '🌗 Auto', dark: '🌙 Oscuro', light: '☀️ Claro' };
 const THEME_NEXT: Record<Theme, Theme> = { auto: 'dark', dark: 'light', light: 'auto' };
 
+// Learner-voice preference — which voice reads the LEARNER's own lines back
+// to them (see ui.tsx setVoicePref). Character voices (officer, receptionist,
+// Tía Marisol, Aria narration) are fixed and never change with this pref.
+const VOICE_ICON: Record<VoicePref, string> = { f: '🙋‍♀️', m: '🙋‍♂️' };
+const VOICE_LABEL: Record<VoicePref, string> = { f: '🙋‍♀️ Voz', m: '🙋‍♂️ Voz' };
+const VOICE_NEXT: Record<VoicePref, VoicePref> = { f: 'm', m: 'f' };
+// Canonical confirmation line, spoken in the new voice right after a Settings
+// toggle so the user can hear the difference immediately (never during
+// onboarding — no autoplay before the user's first gesture there).
+const VOICE_CONFIRM_LINE = 'I want to remain silent.';
+
+// Guide preference — which character walks the learner through scenes (see
+// ui.tsx setGuidePref / data.ts getGuide). Settings toggle shows the short
+// form ('Tía'/'Tío'); GUIDE_NEXT flips between the two on tap.
+const GUIDE_NEXT: Record<GuidePref, GuidePref> = { marisol: 'mateo', mateo: 'marisol' };
+// Canonical confirmation line, spoken in Spanish in the new guide voice.
+const GUIDE_CONFIRM_LINE = 'Quiero permanecer en silencio.';
+
+const NAME_MAX = 24;
+
 interface Persisted {
   completed?: Record<string, boolean>;
   onboarded?: boolean;
   prep?: Record<string, boolean>;
   theme?: Theme;
+  voice?: VoicePref;
+  guide?: GuidePref;
+  // Display name only — never leaves the device (localStorage, same as
+  // every other field here); empty string means "not set / skipped".
+  name?: string;
+  address?: AddressPref;
 }
 
 function loadState(): Persisted {
@@ -53,6 +79,11 @@ interface PuenteState {
   rightsOpen: boolean;
   discreet: boolean;
   theme: Theme;
+  voice: VoicePref;
+  guide: GuidePref;
+  name: string;
+  address: AddressPref;
+  nameEditorOpen: boolean;
 }
 
 interface PuenteHandlers {
@@ -66,6 +97,15 @@ interface PuenteHandlers {
   nav: (r: string) => void;
   exitDiscreet: () => void;
   cycleTheme: () => void;
+  pickVoice: (v: VoicePref) => void;
+  cycleVoice: () => void;
+  pickGuide: (v: GuidePref) => void;
+  cycleGuide: () => void;
+  pickName: (name: string) => void;
+  pickAddress: (v: AddressPref) => void;
+  openNameEditor: () => void;
+  closeNameEditor: () => void;
+  saveNameEditor: (name: string, address: AddressPref) => void;
 }
 
 function usePuente() {
@@ -77,10 +117,26 @@ function usePuente() {
   const [rightsOpen, setRightsOpen] = useState(false);
   const [discreet, setDiscreet] = useState(false);
   const [theme, setTheme] = useState<Theme>(saved.theme || 'auto');
+  const [voice, setVoice] = useState<VoicePref>(saved.voice || 'f');
+  const [guide, setGuide] = useState<GuidePref>(saved.guide || 'marisol');
+  const [name, setName] = useState<string>(saved.name || '');
+  const [address, setAddress] = useState<AddressPref>(saved.address || 'f');
+  const [nameEditorOpen, setNameEditorOpen] = useState(false);
 
   useEffect(() => {
-    saveState({ ...loadState(), completed, prep, theme, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
-  }, [completed, prep, route, theme]);
+    saveState({ ...loadState(), completed, prep, theme, voice, guide, name, address, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
+  }, [completed, prep, route, theme, voice, guide, name, address]);
+
+  // Push the current preferences into ui.tsx's module-level setters — on
+  // load (this effect's first run) and every time either changes.
+  // speak()/speakEs()/_clipFor() read them synchronously, never
+  // localStorage, on the hot path.
+  useEffect(() => {
+    setVoicePref(voice);
+  }, [voice]);
+  useEffect(() => {
+    setGuidePref(guide);
+  }, [guide]);
 
   const h: PuenteHandlers = {
     finishOnboarding: () => { saveState({ ...loadState(), onboarded: true }); setRoute('home'); },
@@ -97,31 +153,104 @@ function usePuente() {
     },
     exitDiscreet: () => setDiscreet(false),
     cycleTheme: () => setTheme((t) => THEME_NEXT[t]),
+    // Onboarding's voice-choice panel: store the pick, no confirmation audio
+    // (no autoplay before the user's first gesture during onboarding).
+    pickVoice: (v) => setVoice(v),
+    // Settings toggle (both chromes): flip the pref and immediately speak a
+    // canonical learner line in the new voice so the change is audible right
+    // away — the toggle tap IS the user gesture, so this is allowed.
+    cycleVoice: () => {
+      const next = VOICE_NEXT[voice];
+      setVoicePref(next); // sync ui.tsx's module var before speak() below
+      setVoice(next);
+      speak(VOICE_CONFIRM_LINE, 'en-US');
+    },
+    // Onboarding's guide-choice panel: store the pick, no confirmation audio.
+    pickGuide: (v) => setGuide(v),
+    // Settings toggle (both chromes): flip the pref and speak a Spanish
+    // confirmation line in the new guide voice — same pattern as cycleVoice.
+    cycleGuide: () => {
+      const next = GUIDE_NEXT[guide];
+      setGuidePref(next); // sync ui.tsx's module var before speakEs() below
+      setGuide(next);
+      speakEs(GUIDE_CONFIRM_LINE);
+    },
+    // Onboarding's name/address panel: store the pick(s), no confirmation
+    // audio (name/address are text-only, never spoken — see data.ts
+    // resolveAddress's CRITICAL AUDIO CHECK note).
+    pickName: (n) => setName(n.trim().slice(0, NAME_MAX)),
+    pickAddress: (v) => setAddress(v),
+    // Settings: tapping your own identity (Home greeting / sidebar row)
+    // opens the same editor either place — see screens.tsx NameEditor.
+    openNameEditor: () => setNameEditorOpen(true),
+    closeNameEditor: () => setNameEditorOpen(false),
+    saveNameEditor: (n, v) => { setName(n.trim().slice(0, NAME_MAX)); setAddress(v); setNameEditorOpen(false); },
   };
-  return { st: { route, topic, completed, prep, rightsOpen, discreet, theme } as PuenteState, h };
+  return { st: { route, topic, completed, prep, rightsOpen, discreet, theme, voice, guide, name, address, nameEditorOpen } as PuenteState, h };
 }
 
 function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.Element {
   switch (st.route) {
     case 'onboarding':
-      return <Onboarding wide={wide} onDone={h.finishOnboarding} />;
+      return (
+        <Onboarding
+          wide={wide}
+          onDone={h.finishOnboarding}
+          onPickVoice={h.pickVoice}
+          onPickGuide={h.pickGuide}
+          onPickName={h.pickName}
+          onPickAddress={h.pickAddress}
+        />
+      );
     case 'scenario':
-      return <ScenarioRunner scenarioKey={st.topic} wide={wide} onExit={h.goHome} onOpenRights={h.openRights} onComplete={h.complete} />;
+      return (
+        <ScenarioRunner
+          scenarioKey={st.topic}
+          wide={wide}
+          onExit={h.goHome}
+          onOpenRights={h.openRights}
+          onComplete={h.complete}
+          guide={st.guide}
+          name={st.name}
+          address={st.address}
+        />
+      );
     case 'phrasebook':
       return <Phrasebook wide={wide} />;
     case 'preparate':
-      return <Preparate wide={wide} checked={st.prep} onToggle={h.togglePrep} />;
+      return <Preparate wide={wide} checked={st.prep} onToggle={h.togglePrep} guide={st.guide} />;
     case 'nc':
-      return <NorteCarolina wide={wide} onPick={h.pick} onNav={h.nav} />;
+      return <NorteCarolina wide={wide} onPick={h.pick} onNav={h.nav} guide={st.guide} address={st.address} />;
     case 'comingsoon':
       return <ComingSoon topic={st.topic} onClose={h.goHome} />;
     default:
-      return <Home wide={wide} completed={st.completed} onPick={h.pick} onOpenNc={() => h.nav('nc')} />;
+      return (
+        <Home
+          wide={wide}
+          completed={st.completed}
+          onPick={h.pick}
+          onOpenNc={() => h.nav('nc')}
+          guide={st.guide}
+          name={st.name}
+          onEditName={h.openNameEditor}
+        />
+      );
   }
 }
 
 // ---------- NARROW (tab bar) ----------
-function TabBar({ route, onNav, theme, onCycleTheme }: { route: Route; onNav: (r: string) => void; theme: Theme; onCycleTheme: () => void }) {
+function TabBar({
+  route, onNav, theme, onCycleTheme, voice, onCycleVoice, guide, onCycleGuide,
+}: {
+  route: Route;
+  onNav: (r: string) => void;
+  theme: Theme;
+  onCycleTheme: () => void;
+  voice: VoicePref;
+  onCycleVoice: () => void;
+  guide: GuidePref;
+  onCycleGuide: () => void;
+}) {
   const items: [string, string, string][] = [
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Frases'],
@@ -155,6 +284,22 @@ function TabBar({ route, onNav, theme, onCycleTheme }: { route: Route; onNav: (r
       >
         <span style={{ fontSize: 19, opacity: 0.6 }}>{THEME_ICON[theme]}</span>
       </button>
+      <button
+        onClick={onCycleVoice}
+        aria-label={`Voz de tus frases: ${VOICE_LABEL[voice]}`}
+        title={VOICE_LABEL[voice]}
+        style={{ flex: '0 0 auto', border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '5px 6px' }}
+      >
+        <span style={{ fontSize: 19, opacity: 0.6 }}>{VOICE_ICON[voice]}</span>
+      </button>
+      <button
+        onClick={onCycleGuide}
+        aria-label={`Tu guía: ${getGuide(guide).nombre}`}
+        title={getGuide(guide).nombre}
+        style={{ flex: '0 0 auto', border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '5px 6px' }}
+      >
+        <span style={{ fontSize: 19, opacity: 0.6 }}>{guide === 'mateo' ? '🙋‍♂️' : '🙋‍♀️'}</span>
+      </button>
     </div>
   );
 }
@@ -164,7 +309,18 @@ function NarrowChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>{activeScreen(st, h, false)}</div>
-      {showTabs && <TabBar route={st.route} onNav={h.nav} theme={st.theme} onCycleTheme={h.cycleTheme} />}
+      {showTabs && (
+        <TabBar
+          route={st.route}
+          onNav={h.nav}
+          theme={st.theme}
+          onCycleTheme={h.cycleTheme}
+          voice={st.voice}
+          onCycleVoice={h.cycleVoice}
+          guide={st.guide}
+          onCycleGuide={h.cycleGuide}
+        />
+      )}
       {st.rightsOpen && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 5 }}>
           <RightsCard topic={st.topic} onClose={h.closeRights} />
@@ -217,13 +373,35 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
       >
         {THEME_LABEL[st.theme]}
       </button>
+      <button
+        onClick={h.cycleVoice}
+        title={VOICE_LABEL[st.voice]}
+        style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap', marginBottom: 2 }}
+      >
+        {VOICE_LABEL[st.voice]}
+      </button>
+      <button
+        onClick={h.cycleGuide}
+        title={getGuide(st.guide).nombre}
+        style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap', marginBottom: 2 }}
+      >
+        {st.guide === 'mateo' ? '🙋‍♂️' : '🙋‍♀️'} {getGuide(st.guide).short}
+      </button>
       <button onClick={() => h.nav('salir')} style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap' }}>
         🙈 Salida rápida
       </button>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 2px', marginTop: 6, borderTop: `1px solid ${C.divider}` }}>
-        <Guia size={32} ink={C.ink} ring={C.divider} label="R" />
+      {/* Tapping your own identity opens name/address editing (owner
+          decision 2026-07-10) — narrow-chrome counterpart is the Home
+          greeting, see screens.tsx Home + NameEditor. */}
+      <div
+        onClick={h.openNameEditor}
+        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 2px', marginTop: 6, borderTop: `1px solid ${C.divider}` }}
+      >
+        <Guia size={32} ink={C.ink} ring={C.divider} label={st.name ? st.name.slice(0, 2).toUpperCase() : 'TÚ'} />
         <div style={{ flex: 1 }}>
-          <div style={{ font: `800 13px ${C.round}`, color: C.ink }}>Rosa</div>
+          {/* Never a fallback fake name — just the name (if set) or the
+              neutral status line alone. */}
+          {st.name && <div style={{ font: `800 13px ${C.round}`, color: C.ink }}>{st.name}</div>}
           <div style={{ font: `700 10px ${C.round}`, color: topicInk(155) }}>● Sin red · listo</div>
         </div>
       </div>
@@ -286,6 +464,10 @@ export default function App() {
     // the stylesheet's @media (prefers-color-scheme) rule applies.
     <div class="pd-app" data-theme={st.theme === 'auto' ? undefined : st.theme} style={{ height: '100%', width: '100%' }}>
       {wide ? <WideChrome st={st} h={h} /> : <NarrowChrome st={st} h={h} />}
+      {/* Rendered once at the top level (not per-chrome) so it overlays
+          either layout identically — triggered from Home's greeting
+          (narrow) or the sidebar identity row (wide). */}
+      {st.nameEditorOpen && <NameEditor name={st.name} address={st.address} onSave={h.saveNameEditor} onClose={h.closeNameEditor} />}
     </div>
   );
 }

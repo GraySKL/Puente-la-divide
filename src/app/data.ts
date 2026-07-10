@@ -13,6 +13,49 @@
 // brief found no verified claims for those settings (see brief §5/§6).
 import coreRights from '../content/phrases/core-rights.json';
 
+// ---- guide character preference — Tía Marisol (default) or Tío Mateo -------
+// Same personality, same words; only name, grammatical gender, and voice
+// change (owner decision 2026-07-10). Any UI string that names or genders
+// the guide should route through getGuide() rather than hardcoding one.
+export type GuidePref = 'marisol' | 'mateo';
+export interface GuideConfig {
+  nombre: string; // 'Tía Marisol' | 'Tío Mateo'
+  short: string; // avatar-circle label: 'Tía' | 'Tío'
+  label: string; // uppercase chip label: 'TÍA MARISOL' | 'TÍO MATEO'
+}
+const GUIDES: Record<GuidePref, GuideConfig> = {
+  marisol: { nombre: 'Tía Marisol', short: 'Tía', label: 'TÍA MARISOL' },
+  mateo: { nombre: 'Tío Mateo', short: 'Tío', label: 'TÍO MATEO' },
+};
+export function getGuide(pref: GuidePref): GuideConfig {
+  return GUIDES[pref] || GUIDES.marisol;
+}
+
+// ---- grammatical-address preference — how the app's Spanish addresses the
+// USER (owner decision 2026-07-10, upgraded from future-feature to shipped).
+// Default 'f' preserves the app's existing house style. This is a pure text
+// concern — it never touches audio (see CRITICAL AUDIO CHECK note below) —
+// so unlike VoicePref/GuidePref it has no ui.tsx module-level mirror.
+export type AddressPref = 'f' | 'm';
+
+// «feminine|masculine» tokens in ES content strings, resolved at render time.
+// Mechanism chosen over dual es/esM fields so only the morpheme differs —
+// the rest of a sentence is physically the same string and can't drift
+// between variants. A string with no token round-trips unchanged.
+// CRITICAL AUDIO CHECK: no string containing this token is ever passed to
+// speak()/speakEs() — grep for '«' in src/app to re-verify after edits.
+export function resolveAddress(text: string, address: AddressPref): string {
+  return text.replace(/«([^|»]*)\|([^»]*)»/g, (_m, f: string, m: string) => (address === 'f' ? f : m));
+}
+
+// "Vamos juntas/juntos" — correct only when BOTH the guide is Marisol AND
+// the address preference is feminine (a feminine pair); any other
+// combination (Mateo, or masculine address, or both) takes the masculine
+// default "juntos" per standard Spanish mixed/masculine-default agreement.
+export function juntxsFor(guide: GuidePref, address: AddressPref): string {
+  return guide === 'marisol' && address === 'f' ? 'juntas' : 'juntos';
+}
+
 export type TopicKey = 'parada' | 'clinica' | 'trabajo' | 'casa' | 'escuela' | 'corte';
 
 export interface Topic {
@@ -95,10 +138,17 @@ export const SCENARIOS: Partial<Record<TopicKey, Scenario>> = {
       // guidance on how far to lower the window (not in the verified set).
       // Track B calm/silence framing: ILRC.
       // https://www.ilrc.org/community-resources/know-your-rights/know-your-rights-when-confronted-ice-flyer
-      { t: 'tip', es: 'Sé que da miedo cuando la ventana está subida y no ves bien quién se acerca. Ese miedo es real — ha habido reportes de ventanas rotas durante paradas de tránsito. Aun así, lo que te mantiene más segura sigue siendo lo mismo: cuerpo tranquilo, manos visibles, y tus derechos dichos en voz alta.', en: "It's frightening when the window is up and you can't see clearly who's approaching. That fear is real — window-breaking during traffic stops has been documented. Even so, what keeps you safest is still the same: a calm body, visible hands, and your rights spoken out loud." },
+      // «segura|seguro» — address-aware (owner decision 2026-07-10); see
+      // AddressPref/resolveAddress above. Not audible — this tip is never
+      // passed to speak()/speakEs().
+      { t: 'tip', es: 'Sé que da miedo cuando la ventana está subida y no ves bien quién se acerca. Ese miedo es real — ha habido reportes de ventanas rotas durante paradas de tránsito. Aun así, lo que te mantiene más «segura|seguro» sigue siendo lo mismo: cuerpo tranquilo, manos visibles, y tus derechos dichos en voz alta.', en: "It's frightening when the window is up and you can't see clearly who's approaching. That fear is real — window-breaking during traffic stops has been documented. Even so, what keeps you safest is still the same: a calm body, visible hands, and your rights spoken out loud." },
       { t: 'say', who: 'El oficial', en: 'License and registration, please.', es: 'Licencia y registración, por favor.' },
       { t: 'choose', prompt: '¿Qué dices?', options: [
-        { en: 'Here you are, officer.', es: 'Aquí tiene, oficial.', tone: 'best', reply: 'Muy bien. Entregar tus documentos es cooperar — eso está bien y te mantiene seguro.' },
+        // «segura|seguro» — was hardcoded masculine ("seguro") here even
+        // though the house default is feminine; corrected to match the
+        // house-style default and made address-aware like the instance
+        // above, so both respond to the same toggle consistently.
+        { en: 'Here you are, officer.', es: 'Aquí tiene, oficial.', tone: 'best', reply: 'Muy bien. Entregar tus documentos es cooperar — eso está bien y te mantiene «segura|seguro».' },
         { en: 'Why did you stop me?', es: '¿Por qué me detuvo?', tone: 'good', reply: 'Puedes preguntarlo, con calma y respeto.' },
       ] },
       { t: 'say', who: 'El oficial', en: 'Where were you born?', es: '¿Dónde nació usted?' },
@@ -121,7 +171,10 @@ export const SCENARIOS: Partial<Record<TopicKey, Scenario>> = {
         { en: 'Am I free to go?', es: '¿Soy libre de irme?', tone: 'good', reply: 'Buena pregunta. Si te dicen que sí, puedes irte con calma. Si no, sigues en silencio.' },
       ] },
       { t: 'speak', target: { en: 'Am I free to go?', es: '¿Soy libre de irme?' } },
-      { t: 'recap', es: 'Lo hiciste muy bien, Rosa. Estas frases ya son tuyas — guárdalas en el bolsillo.', learned: [
+      // {learner} is the player's own display name (not the guide's — see
+      // getGuide()/{name} in scenario.tsx) — render-side templating drops
+      // the whole ", {learner}" clause gracefully when no name is set.
+      { t: 'recap', es: 'Lo hiciste muy bien, {learner}. Estas frases ya son tuyas — guárdalas en el bolsillo.', learned: [
         { en: 'Here you are, officer.', es: 'Aquí tiene, oficial.' },
         { en: 'Which agency are you with?', es: '¿De qué agencia es usted?' },
         { en: 'I want to remain silent.', es: 'Quiero permanecer en silencio.' },
@@ -253,7 +306,11 @@ export const SCENARIOS: Partial<Record<TopicKey, Scenario>> = {
       // NIJC explicitly extends the door-closed/ask-for-warrant protocol to
       // children (brief §2 Track B).
       // https://immigrantjustice.org/for-immigrants/know-your-rights/ice-encounter/
-      { t: 'tip', es: 'NIJC —una organización que apoya a familias inmigrantes— dice que este mismo protocolo también es para los niños. Tía Marisol sugiere: practiquen estas frases juntos en casa, como un juego tranquilo.', en: 'NIJC — an organization that supports immigrant families — says this same protocol extends to children too. Tía Marisol suggests: practice these lines together at home, like a calm game.' },
+      // {name} is substituted at render time with the chosen guide's name
+      // (see getGuide() above / scenario.tsx) — "juntos" here refers to the
+      // family practicing together, NOT the guide's grammatical gender, so
+      // it does not change with the guide pick.
+      { t: 'tip', es: 'NIJC —una organización que apoya a familias inmigrantes— dice que este mismo protocolo también es para los niños. {name} sugiere: practiquen estas frases juntos en casa, como un juego tranquilo.', en: 'NIJC — an organization that supports immigrant families — says this same protocol extends to children too. {name} suggests: practice these lines together at home, like a calm game.' },
       // FLAGGED PER BRIEF §2 as a live, contested dispute — NOT settled law:
       // a reported 2025–2026 DHS memo asserts I-205 administrative warrants
       // authorize forced home entry against people with final removal
@@ -315,7 +372,11 @@ export const PHRASES: { topic: TopicKey; items: Phrase[] }[] = [
 export const ONBOARDING: { emoji: string; title: string; body: string }[] = [
   { emoji: '🌅', title: 'El inglés que de verdad necesitas', body: 'Aprende a hablar en los momentos que importan — y conoce tus derechos en cada paso.' },
   { emoji: '📶', title: 'Funciona sin internet', body: 'Sin cuenta. Sin rastro. Todo vive en tu teléfono y nadie más lo ve.' },
-  { emoji: '💛', title: 'Tu guía, siempre contigo', body: 'Tía Marisol te acompaña en cada situación, con calma y sin juzgar.' },
+  // body's {name} is substituted with the chosen guide's name at render
+  // time (see Onboarding in screens.tsx) — this panel shows BEFORE the
+  // guide-choice panel, so it always shows the default ('Tía Marisol')
+  // there, which is fine: it's introducing the concept, not confirming it.
+  { emoji: '💛', title: 'Tu guía, siempre contigo', body: '{name} te acompaña en cada situación, con calma y sin juzgar.' },
 ];
 
 // ---- Prepárate: family-preparedness checklist ----------------------------
@@ -429,7 +490,11 @@ export const NC_ITEMS: NcCard[] = [
     icon: '🔒',
     titleEs: 'Si te arrestan',
     titleEn: 'If you are arrested',
-    bodyEs: 'En cada cárcel del condado en Carolina del Norte, ser ACUSADA —no necesariamente condenada— de cualquier delito grave o de manejar bajo los efectos (DUI) activa, desde octubre de 2025, una verificación de estatus migratorio. Las cárceles deben mantener a la persona hasta 48 horas después de su hora de salida programada, para que ICE pueda recogerla. Las frases de tu tarjeta de derechos —silencio, un abogado— aplican en cada paso. Aquí es donde más importa haberte preparado: que alguien de confianza tenga tu número A y sepa qué hacer.',
+    // «ACUSADA|ACUSADO» / «condenada|condenado» — address-aware (owner
+    // decision 2026-07-10); see AddressPref/resolveAddress above. Not
+    // audible — NC card bodyEs is never passed to speak()/speakEs(), only
+    // bodyEn (already gender-neutral English) is.
+    bodyEs: 'En cada cárcel del condado en Carolina del Norte, ser «ACUSADA|ACUSADO» —no necesariamente «condenada|condenado»— de cualquier delito grave o de manejar bajo los efectos (DUI) activa, desde octubre de 2025, una verificación de estatus migratorio. Las cárceles deben mantener a la persona hasta 48 horas después de su hora de salida programada, para que ICE pueda recogerla. Las frases de tu tarjeta de derechos —silencio, un abogado— aplican en cada paso. Aquí es donde más importa haberte preparado: que alguien de confianza tenga tu número A y sepa qué hacer.',
     bodyEn: 'In every North Carolina county jail, being CHARGED — not necessarily convicted — with any felony or any impaired-driving offense has triggered an immigration-status check since October 2025. Jails must hold a person up to 48 hours past their scheduled release time so ICE can pick them up. The phrases on your rights card — silence, a lawyer — apply at every step. This is where being prepared matters most: someone you trust having your A-Number and knowing what to do.',
     source: 'Fuente: HB 10 / SL 2024-55 · HB 318 / SL 2025-85',
     action: { labelEs: 'Ir a Prepárate →', target: 'preparate' },
@@ -453,7 +518,8 @@ export const NC_ITEMS: NcCard[] = [
   {
     id: 'no-sola',
     icon: '🤝',
-    titleEs: 'No estás sola',
+    // «sola|solo» — address-aware (owner decision 2026-07-10); not audible.
+    titleEs: 'No estás «sola|solo»',
     titleEn: 'You are not alone',
     bodyEs: 'Una demanda federal colectiva —Aceituno v. USDHS, presentada en febrero de 2026 por ACLU-NC y organizaciones aliadas— está impugnando los arrestos de inmigración sin orden judicial en Carolina del Norte. Y las comunidades se organizan: el kit de defensa de Siembra NC está disponible en siembranc.org.',
     bodyEn: "A federal class-action lawsuit — Aceituno v. USDHS, filed in February 2026 by ACLU-NC and partner organizations — is challenging warrantless immigration arrests in North Carolina. And communities are organizing: Siembra NC's defense toolkit is available at siembranc.org.",

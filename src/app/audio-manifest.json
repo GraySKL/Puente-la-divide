@@ -34,6 +34,26 @@
     "carry valid proof of your status or work permit with you never false documents or documents from another country": "en/prep-valid-docs.mp3",
     "choose one emergency contact who has your passcodes and house keys just in case": "en/prep-contact.mp3"
   },
+  "en_male": {
+    "here you are officer": "en/male/learner-here-you-are.mp3",
+    "why did you stop me": "en/male/learner-why-stop.mp3",
+    "i prefer not to answer": "en/male/learner-prefer-not.mp3",
+    "i want to remain silent": "en/male/learner-remain-silent.mp3",
+    "am i free to go": "en/male/learner-free-to-go.mp3",
+    "i don't have insurance": "en/male/learner-no-insurance.mp3",
+    "can we talk about payment later": "en/male/learner-payment-later.mp3",
+    "i have strong chest pain": "en/male/learner-chest-pain.mp3",
+    "i need to see a doctor please": "en/male/learner-see-doctor-please.mp3",
+    "i need to see a doctor": "en/male/learner-see-doctor.mp3",
+    "it hurts here": "en/male/learner-hurts-here.mp3",
+    "i do not consent to a search": "en/male/learner-no-consent-search.mp3",
+    "i want to speak to a lawyer": "en/male/learner-speak-lawyer.mp3",
+    "i do not wish to answer questions": "en/male/learner-no-answer-questions.mp3",
+    "which agency are you with": "en/male/learner-which-agency.mp3",
+    "please slide the warrant under the door so i can read it": "en/male/learner-slide-warrant.mp3",
+    "i do not consent to your entry": "en/male/learner-no-consent-entry.mp3",
+    "is that a judicial warrant signed by a judge or an administrative warrant": "en/male/learner-judicial-or-admin.mp3"
+  },
   "es": {
     "aquí tiene oficial": "es/app-aqui-tiene.mp3",
     "necesito ver a un doctor": "es/app-ver-doctor.mp3",
@@ -41,5 +61,13 @@
     "podemos hablar del pago después": "es/app-pago-despues.mp3",
     "de qué agencia es usted": "es/app-que-agencia.mp3",
     "no doy mi consentimiento para su entrada": "es/app-no-consent-entrada.mp3"
+  },
+  "es_male": {
+    "aquí tiene oficial": "es/male/app-aqui-tiene.mp3",
+    "necesito ver a un doctor": "es/male/app-ver-doctor.mp3",
+    "me duele aquí": "es/male/app-me-duele.mp3",
+    "podemos hablar del pago después": "es/male/app-pago-despues.mp3",
+    "de qué agencia es usted": "es/male/app-que-agencia.mp3",
+    "no doy mi consentimiento para su entrada": "es/male/app-no-consent-entrada.mp3"
   }
 }

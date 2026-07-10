@@ -2,16 +2,43 @@
 // Ported from Claude Design/pscreens.jsx (Preact + TS).
 import { useEffect, useState } from 'preact/hooks';
 import {
-  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, NC_HUE, NC_INTRO, NC_ITEMS, NC_LINK_URL, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, RIGHTS, TOPICS, type TopicKey,
+  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, getGuide, juntxsFor, LOCKED, NC_HUE, NC_INTRO, NC_ITEMS, NC_LINK_URL, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, resolveAddress, RIGHTS, TOPICS, type AddressPref, type GuidePref, type TopicKey,
 } from './data';
-import { C, Glyph, Guia, Pill, ProgressBar, speak, speakEs, speakSeq, topicEdge, topicInk, topicMid, topicSoft } from './ui';
+import { C, Glyph, Guia, Pill, ProgressBar, speak, speakSeq, topicEdge, topicInk, topicMid, topicSoft, type VoicePref } from './ui';
+
+const NAME_MAX = 24;
 
 // ---------- ONBOARDING ----------
-export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean }) {
+export function Onboarding({
+  onDone, wide, onPickVoice, onPickGuide, onPickName, onPickAddress,
+}: {
+  onDone: () => void;
+  wide: boolean;
+  onPickVoice: (v: VoicePref) => void;
+  onPickGuide: (v: GuidePref) => void;
+  onPickName: (name: string) => void;
+  onPickAddress: (v: AddressPref) => void;
+}) {
   const [i, setI] = useState(0);
-  const total = ONBOARDING.length; // panels, then a final confirm = index === total
-  const onConfirm = i === total;
+  const [name, setName] = useState(''); // local default for the name panel below; app.tsx already defaults to '' too
+  const [address, setAddress] = useState<AddressPref>('f'); // local default, on the same panel as name; app.tsx already defaults to 'f' too
+  const [voice, setVoice] = useState<VoicePref>('f'); // local default for the voice panel below; app.tsx already defaults to 'f' too
+  const [guide, setGuide] = useState<GuidePref>('marisol'); // local default for the guide panel below; app.tsx already defaults to 'marisol' too
+  // info panels, then name, then guide, then voice (name first so the guide/
+  // voice panels could greet by name later; owner order, 2026-07-10), then a
+  // final confirm.
+  const infoTotal = ONBOARDING.length;
+  const nameIndex = infoTotal;
+  const guideIndex = infoTotal + 1;
+  const voiceIndex = infoTotal + 2;
+  const confirmIndex = infoTotal + 3;
+  const total = confirmIndex; // last dot index
+  const onNamePanel = i === nameIndex;
+  const onGuidePanel = i === guideIndex;
+  const onVoicePanel = i === voiceIndex;
+  const onConfirm = i === confirmIndex;
   const p = ONBOARDING[i];
+  const g = getGuide(guide);
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, padding: wide ? '40px 48px' : '20px 26px 26px' }}>
       <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center', gap: 7, paddingTop: 6 }}>
@@ -20,19 +47,127 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
         ))}
       </div>
       <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
-        {!onConfirm ? (
+        {onNamePanel ? (
+          <>
+            <div style={{ fontSize: 64, lineHeight: 1 }}>💬</div>
+            <div style={{ font: `800 26px/1.25 ${C.round}`, color: C.ink, marginTop: 24 }}>¿Cómo quieres que te llamemos?</div>
+            <input
+              value={name}
+              onInput={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))}
+              placeholder="Tu nombre o apodo"
+              maxLength={NAME_MAX}
+              style={{
+                marginTop: 22, width: '100%', maxWidth: 300, border: 'none', boxShadow: `inset 0 0 0 1.5px ${C.divider}`,
+                borderRadius: 16, padding: '14px 18px', font: `800 16px ${C.round}`, color: C.ink, background: C.panel, textAlign: 'center',
+              }}
+            />
+            <div style={{ font: `600 15px/1.5 ${C.round}`, color: C.dim, marginTop: 12, maxWidth: 320 }}>
+              Puedes usar cualquier nombre — solo vive en tu teléfono.
+            </div>
+            <div style={{ font: `600 12px/1.5 ${C.round}`, color: C.faint, marginTop: 8, maxWidth: 320 }}>
+              Use any name you like — it only lives on your phone.
+            </div>
+            {/* Grammatical-address preference (owner decision 2026-07-10) —
+                lives on this same panel to keep onboarding tight. Default
+                femenino preselected, preserving the app's house style. */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 18, width: '100%', maxWidth: 300 }}>
+              {(['f', 'm'] as const).map((v) => {
+                const on = address === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setAddress(v)}
+                    style={{
+                      flex: 1, border: 'none', cursor: 'pointer', borderRadius: 999, padding: '9px 10px',
+                      font: `800 12px ${C.round}`, background: on ? topicMid(250) : C.panel, color: on ? '#fff' : C.dim,
+                      boxShadow: C.shSoft,
+                    }}
+                  >
+                    {v === 'f' ? 'Háblame en femenino' : 'Háblame en masculino'}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => { setName(''); onPickName(''); onPickAddress(address); setI(i + 1); }}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', font: `800 13px ${C.round}`, color: topicInk(250), marginTop: 18 }}
+            >
+              Ahora no
+            </button>
+          </>
+        ) : onGuidePanel ? (
+          <>
+            <div style={{ fontSize: 64, lineHeight: 1 }}>🧭</div>
+            <div style={{ font: `800 26px/1.25 ${C.round}`, color: C.ink, marginTop: 24 }}>¿Quién te acompaña?</div>
+            <div style={{ font: `600 15px/1.5 ${C.round}`, color: C.dim, marginTop: 12, maxWidth: 320 }}>
+              Te acompaña en cada situación, con calma.
+            </div>
+            <div style={{ font: `600 12px/1.5 ${C.round}`, color: C.faint, marginTop: 8, maxWidth: 320 }}>
+              They'll guide you through every situation, calmly.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22, width: '100%', maxWidth: 300 }}>
+              {(['marisol', 'mateo'] as const).map((v) => {
+                const on = guide === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => { setGuide(v); onPickGuide(v); setI(i + 1); }}
+                    style={{
+                      border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 16, padding: '14px 18px',
+                      font: `800 15px ${C.round}`, background: on ? topicMid(250) : C.panel, color: on ? '#fff' : C.ink,
+                      boxShadow: C.sh,
+                    }}
+                  >
+                    {v === 'marisol' ? '🙋‍♀️ Tía Marisol' : '🙋‍♂️ Tío Mateo'}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : onVoicePanel ? (
+          <>
+            <div style={{ fontSize: 64, lineHeight: 1 }}>🎙️</div>
+            <div style={{ font: `800 26px/1.25 ${C.round}`, color: C.ink, marginTop: 24 }}>¿Con qué voz quieres que suenen tus frases?</div>
+            <div style={{ font: `600 15px/1.5 ${C.round}`, color: C.dim, marginTop: 12, maxWidth: 320 }}>
+              Cuando la app hable por ti, usará esta voz. Puedes cambiarla cuando quieras.
+            </div>
+            <div style={{ font: `600 12px/1.5 ${C.round}`, color: C.faint, marginTop: 8, maxWidth: 320 }}>
+              When the app speaks your lines out loud, it will use this voice. You can change it anytime.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22, width: '100%', maxWidth: 300 }}>
+              {(['f', 'm'] as const).map((v) => {
+                const on = voice === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => { setVoice(v); onPickVoice(v); setI(i + 1); }}
+                    style={{
+                      border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 16, padding: '14px 18px',
+                      font: `800 15px ${C.round}`, background: on ? topicMid(250) : C.panel, color: on ? '#fff' : C.ink,
+                      boxShadow: C.sh,
+                    }}
+                  >
+                    {v === 'f' ? '🙋‍♀️ Voz de mujer' : '🙋‍♂️ Voz de hombre'}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : !onConfirm ? (
           <>
             <div style={{ fontSize: 76, lineHeight: 1 }}>{p.emoji}</div>
             <div style={{ font: `800 28px/1.15 ${C.round}`, color: C.ink, marginTop: 26 }}>{p.title}</div>
-            <div style={{ font: `600 16px/1.55 ${C.round}`, color: C.dim, marginTop: 12 }}>{p.body}</div>
+            {/* {name} substitutes the (still-default, since this panel comes
+                before the guide-choice panel) guide's name — see data.ts. */}
+            <div style={{ font: `600 16px/1.55 ${C.round}`, color: C.dim, marginTop: 12 }}>{p.body.replace('{name}', g.nombre)}</div>
           </>
         ) : (
           <>
-            <Guia size={80} ink={C.ink} ring={C.divider} label="Tía" />
+            <Guia size={80} ink={C.ink} ring={C.divider} label={g.short} />
             <div style={{ font: `800 26px/1.2 ${C.round}`, color: C.ink, marginTop: 22 }}>
-              Soy Tía Marisol.
+              Soy {g.nombre}.
               <br />
-              Vamos juntas.
+              Vamos {juntxsFor(guide, address)}.
             </div>
             <div style={{ font: `600 15px/1.5 ${C.round}`, color: C.dim, marginTop: 12, maxWidth: 300 }}>Confírmame esto y empezamos. No necesitas cuenta ni internet.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22, width: '100%', maxWidth: 300 }}>
@@ -52,7 +187,23 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
         )}
       </div>
       <div style={{ flex: '0 0 auto', maxWidth: 420, width: '100%', margin: '0 auto' }}>
-        <Pill kind={onConfirm ? 'primary' : 'dark'} hue={250} full onClick={() => (onConfirm ? onDone() : setI(i + 1))}>
+        <Pill
+          kind={onConfirm ? 'primary' : 'dark'}
+          hue={250}
+          full
+          onClick={() => {
+            if (onConfirm) onDone();
+            else {
+              // Leaving a choice panel via the main pill (not a card tap or
+              // "Ahora no") still commits whichever value is current —
+              // typed text / highlighted default.
+              if (onNamePanel) { onPickName(name.trim()); onPickAddress(address); }
+              if (onGuidePanel) onPickGuide(guide);
+              if (onVoicePanel) onPickVoice(voice);
+              setI(i + 1);
+            }
+          }}
+        >
           {onConfirm ? 'Comenzar 💛' : 'Siguiente'}
         </Pill>
         {!onConfirm && (
@@ -67,25 +218,97 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
   );
 }
 
+// ---------- NAME EDITOR (settings: change display name / address later) ----------
+// Triggered by tapping your own identity — the Home greeting (narrow) or the
+// sidebar identity row (wide, see app.tsx Sidebar) — same idiom both places.
+export function NameEditor({
+  name: initialName, address: initialAddress, onSave, onClose,
+}: {
+  name: string;
+  address: AddressPref;
+  onSave: (name: string, address: AddressPref) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [address, setAddress] = useState<AddressPref>(initialAddress);
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 20, background: 'rgba(30,24,18,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+    >
+      <div onClick={(e) => e.stopPropagation()} style={{ background: C.bg, borderRadius: 22, padding: '26px 22px', maxWidth: 320, width: '100%', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.4)', textAlign: 'center' }}>
+        <div style={{ font: `800 18px ${C.round}`, color: C.ink }}>¿Cómo quieres que te llamemos?</div>
+        <input
+          value={name}
+          onInput={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))}
+          placeholder="Tu nombre o apodo"
+          maxLength={NAME_MAX}
+          style={{
+            marginTop: 16, width: '100%', border: 'none', boxShadow: `inset 0 0 0 1.5px ${C.divider}`,
+            borderRadius: 16, padding: '14px 18px', font: `800 16px ${C.round}`, color: C.ink, background: C.panel, textAlign: 'center',
+          }}
+        />
+        <div style={{ font: `600 11px/1.5 ${C.round}`, color: C.faint, marginTop: 10 }}>
+          Puedes usar cualquier nombre — solo vive en tu teléfono.
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          {(['f', 'm'] as const).map((v) => {
+            const on = address === v;
+            return (
+              <button
+                key={v}
+                onClick={() => setAddress(v)}
+                style={{
+                  flex: 1, border: 'none', cursor: 'pointer', borderRadius: 999, padding: '9px 10px',
+                  font: `800 12px ${C.round}`, background: on ? topicMid(250) : C.panel, color: on ? '#fff' : C.dim,
+                  boxShadow: C.shSoft,
+                }}
+              >
+                {v === 'f' ? 'Háblame en femenino' : 'Háblame en masculino'}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <Pill kind="primary" hue={250} full onClick={() => onSave(name.trim(), address)}>
+            Guardar
+          </Pill>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 10 }}>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', font: `700 13px ${C.round}`, color: C.faint }}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- HOME ----------
 export function Home({
-  onPick, completed, wide, onOpenNc,
+  onPick, completed, wide, onOpenNc, guide, name, onEditName,
 }: {
   onPick: (k: TopicKey) => void;
   completed: Record<string, boolean>;
   wide: boolean;
   onOpenNc: () => void;
+  guide: GuidePref;
+  name: string;
+  onEditName: () => void;
 }) {
   const cont: TopicKey = 'parada';
   const t = TOPICS[cont];
+  const g = getGuide(guide);
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '8px 22px 20px', maxWidth: wide ? 760 : 'none', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 8 }}>
-          <Guia size={50} ink={C.ink} ring={C.divider} label="Tía" />
+        {/* Tapping your own greeting opens name editing — narrow-chrome
+            counterpart to the wide sidebar's identity row (see app.tsx). */}
+        <div onClick={onEditName} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 13, paddingTop: 8 }}>
+          <Guia size={50} ink={C.ink} ring={C.divider} label={g.short} />
           <div style={{ flex: 1 }}>
-            <div style={{ font: `700 14px ${C.round}`, color: C.dim }}>Buenos días,</div>
-            <div style={{ font: `800 26px/1 ${C.round}`, color: C.ink }}>Rosa 👋</div>
+            <div style={{ font: `700 14px ${C.round}`, color: C.dim }}>Buenos días{name ? ',' : ''}</div>
+            <div style={{ font: `800 26px/1 ${C.round}`, color: C.ink }}>{name ? `${name} 👋` : '👋'}</div>
           </div>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: `700 11px ${C.round}`, color: topicInk(155), background: topicSoft(155), padding: '6px 11px', borderRadius: 999 }}>
             <i style={{ width: 6, height: 6, borderRadius: 9, background: topicMid(155) }} /> Sin red
@@ -207,7 +430,7 @@ export function Phrasebook({ wide }: { wide: boolean }) {
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
         <div style={{ font: `800 24px ${C.round}`, color: C.ink, paddingTop: 4 }}>Mis frases</div>
-        <div style={{ font: `600 13px ${C.round}`, color: C.dim, marginTop: 4, marginBottom: 16 }}>Toca la frase para escuchar el inglés. Toca el español para escucharlo también.</div>
+        <div style={{ font: `600 13px ${C.round}`, color: C.dim, marginTop: 4, marginBottom: 16 }}>Toca cualquier parte de la frase para escuchar el inglés.</div>
         {PHRASES.map((g) => (
           <div key={g.topic} style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -215,16 +438,16 @@ export function Phrasebook({ wide }: { wide: boolean }) {
               <span style={{ font: `800 15px ${C.round}`, color: C.ink }}>{TOPICS[g.topic].es}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {/* Owner decision 2026-07-10: phrasebook is a speak-for-me surface —
+                  a stressed real-encounter mis-tap must never play the wrong
+                  language, so ANY tap on the card (English or Spanish text)
+                  speaks ONLY the English side. Spanish stays visible as
+                  reading support, never as a separate audio affordance. */}
               {g.items.map((p, i) => (
                 <div key={i} onClick={() => speak(p.en)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 16, padding: '13px 16px', boxShadow: C.shSoft }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ font: `800 16px ${C.round}`, color: C.ink }}>{p.en}</div>
-                    {/* Tapping the Spanish line hears it too — prefers a pre-generated
-                        mp3 (public/audio/es/) over TTS when one exists, see ui.speakEs(). */}
-                    <div
-                      onClick={(e) => { e.stopPropagation(); speakEs(p.es); }}
-                      style={{ font: `600 12px ${C.round}`, color: C.dim, marginTop: 1, cursor: 'pointer' }}
-                    >
+                    <div style={{ font: `600 12px ${C.round}`, color: C.dim, marginTop: 1 }}>
                       {p.es}
                     </div>
                   </div>
@@ -247,19 +470,21 @@ export function Phrasebook({ wide }: { wide: boolean }) {
 // "Cross-cutting" section). Framed as care, not fear: "Prepararse es cuidar
 // a los tuyos." Persisted via the puente_v1 localStorage state in app.tsx.
 export function Preparate({
-  wide, checked, onToggle,
+  wide, checked, onToggle, guide,
 }: {
   wide: boolean;
   checked: Record<string, boolean>;
   onToggle: (id: string) => void;
+  guide: GuidePref;
 }) {
   const hue = PREPARE_HUE;
   const done = PREP_ITEMS.filter((it) => checked[it.id]).length;
+  const g = getGuide(guide);
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 4 }}>
-          <Guia size={44} ink={C.ink} ring={C.divider} label="Tía" />
+          <Guia size={44} ink={C.ink} ring={C.divider} label={g.short} />
           <div style={{ flex: 1 }}>
             <div style={{ font: `800 22px/1.15 ${C.round}`, color: C.ink }}>Prepárate</div>
             <div style={{ font: `700 12px ${C.round}`, color: topicInk(hue) }}>Prepararse es cuidar a los tuyos.</div>
@@ -318,18 +543,21 @@ export function Preparate({
 // action, links straight to that part of the app (La parada / Prepárate)
 // instead of just describing the risk.
 export function NorteCarolina({
-  wide, onPick, onNav,
+  wide, onPick, onNav, guide, address,
 }: {
   wide: boolean;
   onPick: (k: TopicKey) => void;
   onNav: (r: string) => void;
+  guide: GuidePref;
+  address: AddressPref;
 }) {
   const hue = NC_HUE;
+  const g = getGuide(guide);
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 4 }}>
-          <Guia size={44} ink={C.ink} ring={C.divider} label="Tía" />
+          <Guia size={44} ink={C.ink} ring={C.divider} label={g.short} />
           <div style={{ flex: 1 }}>
             <div style={{ font: `800 22px/1.15 ${C.round}`, color: C.ink }}>En Carolina del Norte 📍</div>
             <div style={{ font: `700 12px ${C.round}`, color: topicInk(hue) }}>{NC_INTRO.es}</div>
@@ -338,14 +566,17 @@ export function NorteCarolina({
         <div style={{ font: `600 13px/1.5 ${C.round}`, color: C.dim, marginTop: 10, marginBottom: 16 }}>{NC_INTRO.en}</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* titleEs/bodyEs may carry «feminine|masculine» address tokens
+              (owner decision 2026-07-10) — resolveAddress is a no-op on
+              cards without one. Neither field is ever passed to speak(). */}
           {NC_ITEMS.map((it) => (
             <div key={it.id} style={{ borderRadius: 18, background: C.panel, border: `1px solid ${C.hairline}`, boxShadow: C.sh, padding: '16px 18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                 <span style={{ fontSize: 18 }}>{it.icon}</span>
-                <div style={{ font: `800 15px/1.3 ${C.round}`, color: C.ink }}>{it.titleEs}</div>
+                <div style={{ font: `800 15px/1.3 ${C.round}`, color: C.ink }}>{resolveAddress(it.titleEs, address)}</div>
               </div>
               <div style={{ font: `700 11px ${C.round}`, color: C.dim, marginTop: 1, marginLeft: 27 }}>{it.titleEn}</div>
-              <div style={{ font: `600 13.5px/1.55 ${C.round}`, color: C.ink, marginTop: 10 }}>{it.bodyEs}</div>
+              <div style={{ font: `600 13.5px/1.55 ${C.round}`, color: C.ink, marginTop: 10 }}>{resolveAddress(it.bodyEs, address)}</div>
               {/* Tapping the EN mirror hears it — same idiom as Preparate's PREP_ITEMS. */}
               <div onClick={() => speak(it.bodyEn)} style={{ font: `600 12px/1.55 ${C.round}`, color: C.dim, marginTop: 8, cursor: 'pointer' }}>
                 {it.bodyEn}
