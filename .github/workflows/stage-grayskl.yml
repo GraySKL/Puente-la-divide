@@ -1,0 +1,48 @@
+# Builds the grayskl.com/puente-la-divide version of the app on every push
+# and stages the static output to the `site-live` branch — same pattern as
+# the grayskl-site showcase.
+#
+# This workflow NEVER touches the droplet. Deploys are manual and
+# deliberate: on Sara's say-so, the droplet runs puente-pull.sh
+# (grayskl-site: infra/scripts/puente-pull.sh) to fetch site-live into the
+# folder nginx serves at grayskl.com/puente-la-divide.
+name: Stage grayskl.com subsite
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage-grayskl
+  cancel-in-progress: true
+
+jobs:
+  build-and-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # grayskl.com serves the app under /puente-la-divide (lowercase —
+      # distinct from GitHub Pages' /Puente-la-divide).
+      - run: npm run build
+        env:
+          ASTRO_BASE: /puente-la-divide
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: site-live
+          publish_dir: dist
+          force_orphan: true
+          commit_message: 'stage: grayskl.com subsite ${{ github.sha }}'
