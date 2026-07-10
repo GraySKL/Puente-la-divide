@@ -88,6 +88,12 @@ LINES = [
     ("learner-judicial-or-admin", "en", LEARNER, "-8%", "Is that a judicial warrant signed by a judge, or an administrative warrant?"),
     ("app-que-agencia", "es", MARISOL, "+0%", "¿De qué agencia es usted?"),
     ("app-no-consent-entrada", "es", MARISOL, "+0%", "No doy mi consentimiento para su entrada."),
+    # --- En Carolina del Norte cards (EN mirrors, tap-to-hear) ---
+    ("nc-intro", "en", RECEPCION, "+0%", "The rules changed in North Carolina. Knowing them is protection."),
+    ("nc-carretera", "en", RECEPCION, "+0%", "Since June 2026, a state law requires the North Carolina Highway Patrol and other state agencies to work with ICE under formal agreements. Siembra NC reports that immigration arrests are increasingly targeting people while they drive. What you already practiced in “A stop” — calm body, your rights spoken out loud — matters here more than ever."),
+    ("nc-arresto", "en", RECEPCION, "+0%", "In every North Carolina county jail, being CHARGED — not necessarily convicted — with any felony or any impaired-driving offense has triggered an immigration-status check since October 2025. Jails must hold a person up to 48 hours past their scheduled release time so ICE can pick them up. The phrases on your rights card — silence, a lawyer — apply at every step. This is where being prepared matters most: someone you trust having your A-Number and knowing what to do."),
+    ("nc-letreros", "en", RECEPCION, "+0%", "You may have heard that only some counties have 287(g) agreements with ICE. That no longer makes the difference it used to: sheriff cooperation with ICE is mandatory statewide, whether or not your county has that formal agreement. Don't assume where you live is different."),
+    ("nc-no-sola", "en", RECEPCION, "+0%", "A federal class-action lawsuit — Aceituno v. USDHS, filed in February 2026 by ACLU-NC and partner organizations — is challenging warrantless immigration arrests in North Carolina. And communities are organizing: Siembra NC's defense toolkit is available at siembranc.org."),
     # --- Prepárate checklist EN mirrors (tap-to-hear) ---
     ("prep-a-number", "en", RECEPCION, "+0%", "Share your A-Number with someone you trust, and save the link to ICE's online detainee locator."),
     ("prep-packet", "en", RECEPCION, "+0%", "Keep a preparedness packet — important documents, contacts, instructions — locked away where ICE cannot access it."),

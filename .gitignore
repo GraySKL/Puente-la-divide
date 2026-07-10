@@ -35,3 +35,6 @@ workbox-*.js
 # Not part of the app
 claude-code-token-aware-guide.pdf
 Claude Design/NE Wake Dems*
+
+# Sara's draft handoff doc — commit only when she says it's ready
+immigrant-safety-app-handoff*.md

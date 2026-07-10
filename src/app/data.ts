@@ -363,6 +363,104 @@ export const PREP_ITEMS: PrepItem[] = [
   },
 ];
 
+// ---- En Carolina del Norte: NC enforcement-law awareness section ---------
+// Sourcing basis: docs/research/2026-07-nc-legislation-brief.md — the ONLY
+// permitted source for this section (112-agent, 3-voter adversarial pass;
+// black-letter statutory findings unanimous 3-0 against ncleg.gov). App rule
+// carried from the brief: *what the law says* cites Track A (statute/
+// journalism); *what to do about it* cites Track B (org guidance). Per the
+// brief's "Do NOT claim in-app" list, this section deliberately excludes:
+// DMV, public benefits, and courthouse-practice claims (no verified claims
+// exist yet); a specific current count of 287(g) agreements (disputed,
+// moving fast); HB 318 initial-passage vote tallies (refuted); and any
+// discussion of the limits of HB 318's officer-immunity provision
+// (unsourced, open legal question). Tone: name specifics calmly, pair every
+// one with an action the app already teaches (La parada, the rights card,
+// Prepárate) — never panic, per the brief's tone target.
+export const NC_HUE = 285; // "corte" also uses 285, but corte is LOCKED and hidden — free to reuse publicly here.
+
+// Marisol-voice framing line shown at the top of the section.
+export const NC_INTRO: Phrase = {
+  es: 'Las reglas cambiaron en Carolina del Norte. Conocerlas es protegerte.',
+  en: 'The rules changed in North Carolina. Knowing them is protection.',
+};
+
+export interface NcCard {
+  id: string;
+  icon: string;
+  titleEs: string;
+  titleEn: string;
+  bodyEs: string;
+  bodyEn: string;
+  /** Short "Fuente:" line — bill/case citation only, never a floor-vote detail. */
+  source: string;
+  action?: { labelEs: string; target: 'parada' | 'preparate' };
+}
+
+// Siembra NC's defense toolkit — plain URL per brief §"day-to-day" (Track B
+// organizing link). The app is offline-only; this is a plain <a> the user
+// may tap to leave the app in their own browser — nothing is fetched by the
+// app itself. https://www.siembranc.org/en-toolkit/defend-yourself-from-ice-and-know-your-rights
+export const NC_LINK_URL = 'https://www.siembranc.org/en-toolkit/defend-yourself-from-ice-and-know-your-rights';
+
+export const NC_ITEMS: NcCard[] = [
+  // Brief §3: SB 153 / SL 2026-19 ("NC Border Protection Act"), law since
+  // Jun 24, 2026 — first NC law mandating formal 287(g) agreements, for four
+  // STATE agencies incl. the State Highway Patrol (not county sheriffs).
+  // Track B: Siembra NC toolkit reports arrests increasingly targeting
+  // drivers. Action pairing: the app's own La parada scenario.
+  {
+    id: 'carretera',
+    icon: '🚓',
+    titleEs: 'En la carretera',
+    titleEn: 'On the road',
+    bodyEs: "Desde junio de 2026, una ley estatal obliga a la Patrulla de Caminos de Carolina del Norte y a otras agencias estatales a trabajar con ICE bajo acuerdos formales. Siembra NC reporta que los arrestos de inmigración están enfocándose cada vez más en personas mientras conducen. Lo que ya practicaste en “La parada” —cuerpo tranquilo, tus derechos en voz alta— importa aquí más que nunca.",
+    bodyEn: "Since June 2026, a state law requires the North Carolina Highway Patrol and other state agencies to work with ICE under formal agreements. Siembra NC reports that immigration arrests are increasingly targeting people while they drive. What you already practiced in “A stop” — calm body, your rights spoken out loud — matters here more than ever.",
+    source: 'Fuente: SB 153 / SL 2026-19 · Siembra NC',
+    action: { labelEs: 'Practicar La parada →', target: 'parada' },
+  },
+  // Brief: HB 10 / SL 2024-55 (Dec 2024) broadened by HB 318 / SL 2025-85
+  // (Oct 1, 2025) — being CHARGED (not convicted) of any felony or any
+  // impaired-driving offense triggers a status check in every NC county
+  // jail; 48-hour hold past scheduled release (HB 10 + HB 318). Action
+  // pairing: rights-card phrases + Prepárate (already sourced to ILRC/UWD).
+  {
+    id: 'arresto',
+    icon: '🔒',
+    titleEs: 'Si te arrestan',
+    titleEn: 'If you are arrested',
+    bodyEs: 'En cada cárcel del condado en Carolina del Norte, ser ACUSADA —no necesariamente condenada— de cualquier delito grave o de manejar bajo los efectos (DUI) activa, desde octubre de 2025, una verificación de estatus migratorio. Las cárceles deben mantener a la persona hasta 48 horas después de su hora de salida programada, para que ICE pueda recogerla. Las frases de tu tarjeta de derechos —silencio, un abogado— aplican en cada paso. Aquí es donde más importa haberte preparado: que alguien de confianza tenga tu número A y sepa qué hacer.',
+    bodyEn: 'In every North Carolina county jail, being CHARGED — not necessarily convicted — with any felony or any impaired-driving offense has triggered an immigration-status check since October 2025. Jails must hold a person up to 48 hours past their scheduled release time so ICE can pick them up. The phrases on your rights card — silence, a lawyer — apply at every step. This is where being prepared matters most: someone you trust having your A-Number and knowing what to do.',
+    source: 'Fuente: HB 10 / SL 2024-55 · HB 318 / SL 2025-85',
+    action: { labelEs: 'Ir a Prepárate →', target: 'preparate' },
+  },
+  // Brief: HB10/HB318 sheriff-cooperation mandates apply statewide
+  // regardless of 287(g) status (ACLU-NC 287(g) Toolkit, Mar 2026).
+  // Deliberately no specific county count — on the do-not-claim list.
+  {
+    id: 'letreros',
+    icon: '🪧',
+    titleEs: 'Los letreros ya no dicen todo',
+    titleEn: "Signs don't tell the whole story",
+    bodyEs: 'Quizás hayas escuchado que solo algunos condados tienen acuerdos 287(g) con ICE. Eso ya no marca la diferencia que solía marcar: la cooperación de los alguaciles con ICE es obligatoria en todo el estado, tenga o no tu condado ese acuerdo formal. No asumas que donde vives es diferente.',
+    bodyEn: "You may have heard that only some counties have 287(g) agreements with ICE. That no longer makes the difference it used to: sheriff cooperation with ICE is mandatory statewide, whether or not your county has that formal agreement. Don't assume where you live is different.",
+    source: 'Fuente: HB 10 / SL 2024-55 · HB 318 / SL 2025-85 · ACLU-NC, Paquete 287(g) (mar. 2026)',
+  },
+  // Brief: Aceituno v. USDHS (filed Feb 24, 2026, W.D.N.C. 3:26-cv-00146;
+  // ACLU-NC + ACLU + Democracy Forward + Southern Coalition for Social
+  // Justice) challenges warrantless ICE/CBP arrests in NC — a federal
+  // practice, not these state laws. Organizing link: Siembra NC (NC_LINK_URL above).
+  {
+    id: 'no-sola',
+    icon: '🤝',
+    titleEs: 'No estás sola',
+    titleEn: 'You are not alone',
+    bodyEs: 'Una demanda federal colectiva —Aceituno v. USDHS, presentada en febrero de 2026 por ACLU-NC y organizaciones aliadas— está impugnando los arrestos de inmigración sin orden judicial en Carolina del Norte. Y las comunidades se organizan: el kit de defensa de Siembra NC está disponible en siembranc.org.',
+    bodyEn: "A federal class-action lawsuit — Aceituno v. USDHS, filed in February 2026 by ACLU-NC and partner organizations — is challenging warrantless immigration arrests in North Carolina. And communities are organizing: Siembra NC's defense toolkit is available at siembranc.org.",
+    source: 'Fuente: Aceituno v. USDHS, W.D.N.C. 3:26-cv-00146 (ACLU)',
+  },
+];
+
 // Bilingual legal disclaimer — must stay visible per project CLAUDE.md.
 export const DISCLAIMER_EN = 'This is general information, not legal advice. For your situation, contact a lawyer.';
 export const DISCLAIMER_ES = 'Esto es información general, no asesoría legal. Para su situación, consulte a un abogado.';

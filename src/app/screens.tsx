@@ -2,7 +2,7 @@
 // Ported from Claude Design/pscreens.jsx (Preact + TS).
 import { useEffect, useState } from 'preact/hooks';
 import {
-  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, RIGHTS, TOPICS, type TopicKey,
+  APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, LOCKED, NC_HUE, NC_INTRO, NC_ITEMS, NC_LINK_URL, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, RIGHTS, TOPICS, type TopicKey,
 } from './data';
 import { C, Glyph, Guia, Pill, ProgressBar, speak, speakEs, speakSeq, topicEdge, topicInk, topicMid, topicSoft } from './ui';
 
@@ -69,11 +69,12 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
 
 // ---------- HOME ----------
 export function Home({
-  onPick, completed, wide,
+  onPick, completed, wide, onOpenNc,
 }: {
   onPick: (k: TopicKey) => void;
   completed: Record<string, boolean>;
   wide: boolean;
+  onOpenNc: () => void;
 }) {
   const cont: TopicKey = 'parada';
   const t = TOPICS[cont];
@@ -109,6 +110,19 @@ export function Home({
             </div>
             <span style={{ font: `800 13px ${C.round}`, color: topicInk(t.hue) }}>{completed[cont] ? '6/6' : '3/6'}</span>
           </div>
+        </div>
+
+        {/* En Carolina del Norte — slim banner opening the NC awareness section */}
+        <div
+          onClick={onOpenNc}
+          style={{ cursor: 'pointer', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, borderRadius: 18, background: topicSoft(NC_HUE), border: `1px solid ${topicEdge(NC_HUE)}`, padding: '13px 16px', boxShadow: C.shSoft }}
+        >
+          <span style={{ fontSize: 19 }}>📍</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ font: `800 13.5px/1.25 ${C.round}`, color: C.ink }}>En Carolina del Norte — lo que cambió</div>
+            <div style={{ font: `600 11px ${C.round}`, color: C.dim, marginTop: 1 }}>What changed in North Carolina</div>
+          </div>
+          <span style={{ font: `800 15px ${C.round}`, color: topicInk(NC_HUE) }}>›</span>
         </div>
 
         {/* topics */}
@@ -287,6 +301,75 @@ export function Preparate({
             );
           })}
         </div>
+        <div style={{ textAlign: 'center', font: `600 10.5px/1.4 ${C.round}`, color: C.faint, marginTop: 18 }}>
+          {DISCLAIMER_ES} {DISCLAIMER_EN}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- EN CAROLINA DEL NORTE (NC enforcement-law awareness) ----------
+// Sourcing basis: docs/research/2026-07-nc-legislation-brief.md — see
+// NC_ITEMS in data.ts for the per-card citations. Structural model is
+// Preparate above: Guia header, bilingual intro, C.panel cards, EN mirrors
+// tap-to-hear via speak(), bilingual disclaimer at the bottom. Every card
+// names a specific change calmly and, where the brief pairs it with an
+// action, links straight to that part of the app (La parada / Prepárate)
+// instead of just describing the risk.
+export function NorteCarolina({
+  wide, onPick, onNav,
+}: {
+  wide: boolean;
+  onPick: (k: TopicKey) => void;
+  onNav: (r: string) => void;
+}) {
+  const hue = NC_HUE;
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
+      <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 4 }}>
+          <Guia size={44} ink={C.ink} ring={C.divider} label="Tía" />
+          <div style={{ flex: 1 }}>
+            <div style={{ font: `800 22px/1.15 ${C.round}`, color: C.ink }}>En Carolina del Norte 📍</div>
+            <div style={{ font: `700 12px ${C.round}`, color: topicInk(hue) }}>{NC_INTRO.es}</div>
+          </div>
+        </div>
+        <div style={{ font: `600 13px/1.5 ${C.round}`, color: C.dim, marginTop: 10, marginBottom: 16 }}>{NC_INTRO.en}</div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {NC_ITEMS.map((it) => (
+            <div key={it.id} style={{ borderRadius: 18, background: C.panel, border: `1px solid ${C.hairline}`, boxShadow: C.sh, padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ fontSize: 18 }}>{it.icon}</span>
+                <div style={{ font: `800 15px/1.3 ${C.round}`, color: C.ink }}>{it.titleEs}</div>
+              </div>
+              <div style={{ font: `700 11px ${C.round}`, color: C.dim, marginTop: 1, marginLeft: 27 }}>{it.titleEn}</div>
+              <div style={{ font: `600 13.5px/1.55 ${C.round}`, color: C.ink, marginTop: 10 }}>{it.bodyEs}</div>
+              {/* Tapping the EN mirror hears it — same idiom as Preparate's PREP_ITEMS. */}
+              <div onClick={() => speak(it.bodyEn)} style={{ font: `600 12px/1.55 ${C.round}`, color: C.dim, marginTop: 8, cursor: 'pointer' }}>
+                {it.bodyEn}
+              </div>
+              {it.id === 'no-sola' && (
+                <div style={{ marginTop: 10 }}>
+                  {/* Plain <a>, no fetch — the app never calls this URL itself; only a tap leaves the app. */}
+                  <a href={NC_LINK_URL} target="_blank" rel="noopener noreferrer" style={{ font: `800 12.5px ${C.round}`, color: topicInk(hue) }}>
+                    siembranc.org →
+                  </a>
+                </div>
+              )}
+              {it.action && (
+                <div style={{ marginTop: 12 }}>
+                  <Pill kind="soft" hue={hue} onClick={() => (it.action!.target === 'parada' ? onPick('parada') : onNav('preparate'))}>
+                    {it.action.labelEs}
+                  </Pill>
+                </div>
+              )}
+              <div style={{ font: `700 10px ${C.round}`, color: C.faint, marginTop: 10 }}>{it.source}</div>
+            </div>
+          ))}
+        </div>
+
         <div style={{ textAlign: 'center', font: `600 10.5px/1.4 ${C.round}`, color: C.faint, marginTop: 18 }}>
           {DISCLAIMER_ES} {DISCLAIMER_EN}
         </div>

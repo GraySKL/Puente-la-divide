@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { LOCKED, type TopicKey } from './data';
 import { C, Guia, topicInk, topicMid, topicSoft } from './ui';
-import { ComingSoon, DiscreetCover, Home, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
+import { ComingSoon, DiscreetCover, Home, NorteCarolina, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
 import { ScenarioRunner } from './scenario';
 
 const LS_KEY = 'puente_v1';
@@ -43,7 +43,7 @@ function saveState(s: Persisted) {
   }
 }
 
-type Route = 'onboarding' | 'home' | 'scenario' | 'phrasebook' | 'preparate' | 'comingsoon';
+type Route = 'onboarding' | 'home' | 'scenario' | 'phrasebook' | 'preparate' | 'comingsoon' | 'nc';
 
 interface PuenteState {
   route: Route;
@@ -111,10 +111,12 @@ function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.El
       return <Phrasebook wide={wide} />;
     case 'preparate':
       return <Preparate wide={wide} checked={st.prep} onToggle={h.togglePrep} />;
+    case 'nc':
+      return <NorteCarolina wide={wide} onPick={h.pick} onNav={h.nav} />;
     case 'comingsoon':
       return <ComingSoon topic={st.topic} onClose={h.goHome} />;
     default:
-      return <Home wide={wide} completed={st.completed} onPick={h.pick} />;
+      return <Home wide={wide} completed={st.completed} onPick={h.pick} onOpenNc={() => h.nav('nc')} />;
   }
 }
 
@@ -124,6 +126,7 @@ function TabBar({ route, onNav, theme, onCycleTheme }: { route: Route; onNav: (r
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Frases'],
     ['preparate', '🧳', 'Prepárate'],
+    ['nc', '📍', 'En NC'],
     ['derechos', '🛡️', 'Derechos'],
     ['salir', '🙈', 'Salir'],
   ];
@@ -157,7 +160,7 @@ function TabBar({ route, onNav, theme, onCycleTheme }: { route: Route; onNav: (r
 }
 
 function NarrowChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
-  const showTabs = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate';
+  const showTabs = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate' || st.route === 'nc';
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>{activeScreen(st, h, false)}</div>
@@ -182,6 +185,7 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Mis frases'],
     ['preparate', '🧳', 'Prepárate'],
+    ['nc', '📍', 'En Carolina del Norte'],
   ];
   return (
     <div style={{ width: 240, flex: '0 0 auto', background: C.panel, borderRight: `1px solid ${C.divider}`, display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
@@ -228,7 +232,7 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
 }
 
 function WideChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
-  const wideScreens = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate';
+  const wideScreens = st.route === 'home' || st.route === 'phrasebook' || st.route === 'preparate' || st.route === 'nc';
   return (
     <div style={{ height: '100%', width: '100%', display: 'flex', minHeight: 0, position: 'relative', background: C.bg }}>
       <Sidebar st={st} h={h} />
