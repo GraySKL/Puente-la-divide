@@ -24,7 +24,10 @@ const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
       name="description"
       content="Practica el inglés que necesitas y conoce tus derechos, sin cuenta y sin internet. / Practice the English you need and know your rights — no account, no internet required."
     />
-    <meta name="theme-color" content="#fbfaf7" />
+    {/* Warm dark palette (see .pd-app stylesheet below) approximated to hex for
+        browser-chrome coloring — status bar / task switcher can't parse oklch(). */}
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e1a15" media="(prefers-color-scheme: dark)" />
     <link rel="manifest" href={`${base}manifest.webmanifest`} />
     <link rel="icon" type="image/svg+xml" href={`${base}icons/icon.svg`} />
     <link rel="apple-touch-icon" href={`${base}icons/icon-192.png`} />
@@ -38,17 +41,204 @@ const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 </html>
 
 <style is:global>
+  /* ---- Warm dark mode ------------------------------------------------------
+     CSS custom properties + @media (prefers-color-scheme) — NOT light-dark(),
+     which is too new for the cheap/older Android WebViews this app targets.
+     oklch()/color-mix() ARE used (Chrome/WebView 111+): the light-mode topic
+     palette already shipped on oklch() before this change, so no new
+     compatibility floor is introduced.
+
+     Two scopes:
+     1. :root — just --pd-bg/--pd-ink, system-preference only. Paints
+        html/body before the Preact island hydrates, so there's no white
+        flash behind #app-root on a dark-mode device.
+     2. .pd-app — the full token set (see src/app/ui.tsx `C` + topicMid/
+        Soft/Edge/Ink). Light defaults live on the class itself; dark values
+        apply both automatically (system preference) and via the manual
+        'auto'|'light'|'dark' toggle in app.tsx (persisted in puente_v1),
+        which stamps data-theme on the app root when it's not 'auto'.
+  ------------------------------------------------------------------------- */
+  :root {
+    --pd-bg: #fbfaf7;
+    --pd-ink: #2c2824;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --pd-bg: oklch(0.22 0.012 75);
+      --pd-ink: oklch(0.93 0.01 75);
+    }
+  }
   html,
   body {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #fbfaf7;
-    color: #2c2824;
+    background: var(--pd-bg);
+    color: var(--pd-ink);
   }
   #app-root {
     height: 100dvh;
     width: 100%;
     overflow: hidden;
+  }
+
+  /* ---- .pd-app light defaults (base tokens + one set of vars per topic hue) */
+  .pd-app {
+    --pd-bg: #fbfaf7;
+    --pd-panel: #ffffff;
+    --pd-ink: #2c2824;
+    --pd-dim: rgba(44, 40, 36, 0.55);
+    --pd-faint: rgba(44, 40, 36, 0.4);
+    /* Fixed "ink fill" for solid-dark chips (Pill kind="dark", your-own chat
+       bubble, sidebar CTA) — deliberately does NOT invert in dark mode: these
+       read as a constant dark accent, not as body-text ink. */
+    --pd-solid: #2c2824;
+    --pd-shadow: 0 8px 24px -10px rgba(60, 50, 40, 0.22);
+    --pd-shadow-soft: 0 4px 14px -8px rgba(60, 50, 40, 0.18);
+    /* Elevation ring for panels/cards: invisible in light (shadows do the
+       work there), a subtle warm line in dark (shadows barely show on dark). */
+    --pd-hairline: transparent;
+    /* Structural dividers (tab bar, sidebar rails) — visible in both themes. */
+    --pd-divider: rgba(44, 40, 36, 0.08);
+    /* Translucent chrome bars (blurred tab bar / scenario control bar). */
+    --pd-chrome: rgba(255, 255, 255, 0.85);
+    --pd-chrome-soft: rgba(255, 255, 255, 0.7);
+
+    --t250-mid: oklch(0.62 0.12 250);
+    --t250-soft: oklch(0.93 0.035 250);
+    --t250-edge: oklch(0.86 0.05 250);
+    --t250-ink: oklch(0.46 0.1 250);
+
+    --t155-mid: oklch(0.62 0.12 155);
+    --t155-soft: oklch(0.93 0.035 155);
+    --t155-edge: oklch(0.86 0.05 155);
+    --t155-ink: oklch(0.46 0.1 155);
+
+    --t75-mid: oklch(0.62 0.12 75);
+    --t75-soft: oklch(0.93 0.035 75);
+    --t75-edge: oklch(0.86 0.05 75);
+    --t75-ink: oklch(0.46 0.1 75);
+
+    --t40-mid: oklch(0.62 0.12 40);
+    --t40-soft: oklch(0.93 0.035 40);
+    --t40-edge: oklch(0.86 0.05 40);
+    --t40-ink: oklch(0.46 0.1 40);
+
+    --t330-mid: oklch(0.62 0.12 330);
+    --t330-soft: oklch(0.93 0.035 330);
+    --t330-edge: oklch(0.86 0.05 330);
+    --t330-ink: oklch(0.46 0.1 330);
+
+    --t285-mid: oklch(0.62 0.12 285);
+    --t285-soft: oklch(0.93 0.035 285);
+    --t285-edge: oklch(0.86 0.05 285);
+    --t285-ink: oklch(0.46 0.1 285);
+
+    --t200-mid: oklch(0.62 0.12 200);
+    --t200-soft: oklch(0.93 0.035 200);
+    --t200-edge: oklch(0.86 0.05 200);
+    --t200-ink: oklch(0.46 0.1 200);
+  }
+
+  /* ---- dark, by system preference — wins unless the user picked 'light' -- */
+  @media (prefers-color-scheme: dark) {
+    .pd-app:not([data-theme='light']) {
+      --pd-bg: oklch(0.22 0.012 75);
+      --pd-panel: oklch(0.28 0.012 75);
+      --pd-ink: oklch(0.93 0.01 75);
+      --pd-dim: oklch(0.93 0.01 75 / 0.62);
+      --pd-faint: oklch(0.93 0.01 75 / 0.45);
+      --pd-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.55);
+      --pd-shadow-soft: 0 4px 12px -10px rgba(0, 0, 0, 0.45);
+      --pd-hairline: rgba(255, 247, 235, 0.12);
+      --pd-divider: rgba(255, 247, 235, 0.14);
+      --pd-chrome: rgba(44, 40, 34, 0.85);
+      --pd-chrome-soft: rgba(44, 40, 34, 0.7);
+
+      --t250-mid: oklch(0.62 0.12 250);
+      --t250-soft: oklch(0.3 0.05 250);
+      --t250-edge: oklch(0.38 0.05 250);
+      --t250-ink: oklch(0.8 0.09 250);
+
+      --t155-mid: oklch(0.62 0.12 155);
+      --t155-soft: oklch(0.3 0.05 155);
+      --t155-edge: oklch(0.38 0.05 155);
+      --t155-ink: oklch(0.8 0.09 155);
+
+      --t75-mid: oklch(0.62 0.12 75);
+      --t75-soft: oklch(0.3 0.05 75);
+      --t75-edge: oklch(0.38 0.05 75);
+      --t75-ink: oklch(0.8 0.09 75);
+
+      --t40-mid: oklch(0.62 0.12 40);
+      --t40-soft: oklch(0.3 0.05 40);
+      --t40-edge: oklch(0.38 0.05 40);
+      --t40-ink: oklch(0.8 0.09 40);
+
+      --t330-mid: oklch(0.62 0.12 330);
+      --t330-soft: oklch(0.3 0.05 330);
+      --t330-edge: oklch(0.38 0.05 330);
+      --t330-ink: oklch(0.8 0.09 330);
+
+      --t285-mid: oklch(0.62 0.12 285);
+      --t285-soft: oklch(0.3 0.05 285);
+      --t285-edge: oklch(0.38 0.05 285);
+      --t285-ink: oklch(0.8 0.09 285);
+
+      --t200-mid: oklch(0.62 0.12 200);
+      --t200-soft: oklch(0.3 0.05 200);
+      --t200-edge: oklch(0.38 0.05 200);
+      --t200-ink: oklch(0.8 0.09 200);
+    }
+  }
+
+  /* ---- dark, by manual toggle — wins over system preference either way --- */
+  .pd-app[data-theme='dark'] {
+    --pd-bg: oklch(0.22 0.012 75);
+    --pd-panel: oklch(0.28 0.012 75);
+    --pd-ink: oklch(0.93 0.01 75);
+    --pd-dim: oklch(0.93 0.01 75 / 0.62);
+    --pd-faint: oklch(0.93 0.01 75 / 0.45);
+    --pd-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.55);
+    --pd-shadow-soft: 0 4px 12px -10px rgba(0, 0, 0, 0.45);
+    --pd-hairline: rgba(255, 247, 235, 0.12);
+    --pd-divider: rgba(255, 247, 235, 0.14);
+    --pd-chrome: rgba(44, 40, 34, 0.85);
+    --pd-chrome-soft: rgba(44, 40, 34, 0.7);
+
+    --t250-mid: oklch(0.62 0.12 250);
+    --t250-soft: oklch(0.3 0.05 250);
+    --t250-edge: oklch(0.38 0.05 250);
+    --t250-ink: oklch(0.8 0.09 250);
+
+    --t155-mid: oklch(0.62 0.12 155);
+    --t155-soft: oklch(0.3 0.05 155);
+    --t155-edge: oklch(0.38 0.05 155);
+    --t155-ink: oklch(0.8 0.09 155);
+
+    --t75-mid: oklch(0.62 0.12 75);
+    --t75-soft: oklch(0.3 0.05 75);
+    --t75-edge: oklch(0.38 0.05 75);
+    --t75-ink: oklch(0.8 0.09 75);
+
+    --t40-mid: oklch(0.62 0.12 40);
+    --t40-soft: oklch(0.3 0.05 40);
+    --t40-edge: oklch(0.38 0.05 40);
+    --t40-ink: oklch(0.8 0.09 40);
+
+    --t330-mid: oklch(0.62 0.12 330);
+    --t330-soft: oklch(0.3 0.05 330);
+    --t330-edge: oklch(0.38 0.05 330);
+    --t330-ink: oklch(0.8 0.09 330);
+
+    --t285-mid: oklch(0.62 0.12 285);
+    --t285-soft: oklch(0.3 0.05 285);
+    --t285-edge: oklch(0.38 0.05 285);
+    --t285-ink: oklch(0.8 0.09 285);
+
+    --t200-mid: oklch(0.62 0.12 200);
+    --t200-soft: oklch(0.3 0.05 200);
+    --t200-edge: oklch(0.38 0.05 200);
+    --t200-ink: oklch(0.8 0.09 200);
   }
 </style>

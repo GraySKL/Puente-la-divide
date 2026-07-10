@@ -13,23 +13,40 @@ import type { ComponentChildren, JSX } from 'preact';
 import { TOPICS, normalizeSpoken, spanishAudioSlug, type TopicKey } from './data';
 import audioManifest from './audio-manifest.json';
 
+// Theme tokens resolve to CSS custom properties defined on .pd-app in
+// src/pages/app.astro (light defaults + dark overrides via
+// prefers-color-scheme and the manual data-theme toggle) — the whole app
+// repaints for dark mode via CSS alone, no JS re-render needed.
 export const C = {
-  bg: '#fbfaf7',
-  panel: '#ffffff',
-  ink: '#2c2824',
-  dim: 'rgba(44,40,36,0.55)',
-  faint: 'rgba(44,40,36,0.4)',
+  bg: 'var(--pd-bg)',
+  panel: 'var(--pd-panel)',
+  ink: 'var(--pd-ink)',
+  dim: 'var(--pd-dim)',
+  faint: 'var(--pd-faint)',
+  // Fixed dark "ink fill" for solid-dark chips (Pill kind="dark", your-own
+  // chat bubble, sidebar CTA) — deliberately does NOT invert in dark mode,
+  // see app.astro's --pd-solid comment.
+  solid: 'var(--pd-solid)',
+  hairline: 'var(--pd-hairline)',
+  divider: 'var(--pd-divider)',
+  chrome: 'var(--pd-chrome)',
+  chromeSoft: 'var(--pd-chrome-soft)',
   round: '"Nunito", system-ui',
-  sh: '0 8px 24px -10px rgba(60,50,40,0.22)',
-  shSoft: '0 4px 14px -8px rgba(60,50,40,0.18)',
+  sh: 'var(--pd-shadow)',
+  shSoft: 'var(--pd-shadow-soft)',
 };
 
-// ---- topic color system (Claude Design/kit.jsx) ---------------------------
-const OK = (l: number, c: number, h: number) => `oklch(${l} ${c} ${h})`;
-export const topicInk = (h: number) => OK(0.46, 0.1, h); // strong
-export const topicMid = (h: number) => OK(0.62, 0.12, h); // vivid
-export const topicSoft = (h: number) => OK(0.93, 0.035, h); // wash
-export const topicEdge = (h: number) => OK(0.86, 0.05, h); // hairline
+// ---- topic color system (Claude Design/kit.jsx) ----------------------------
+// Every hue actually used across data.ts/ui.tsx (parada 250, clinica 155,
+// trabajo 75, casa 40, escuela 330, corte 285, PREPARE_HUE 200) has matching
+// --t<hue>-* vars on .pd-app in app.astro, light + dark. An unknown hue falls
+// back to 250 (parada) instead of emitting a var() that resolves to nothing.
+const KNOWN_HUES = [250, 155, 75, 40, 330, 285, 200] as const;
+const hueOrFallback = (h: number): number => ((KNOWN_HUES as readonly number[]).includes(h) ? h : 250);
+export const topicInk = (h: number) => `var(--t${hueOrFallback(h)}-ink)`; // strong
+export const topicMid = (h: number) => `var(--t${hueOrFallback(h)}-mid)`; // vivid
+export const topicSoft = (h: number) => `var(--t${hueOrFallback(h)}-soft)`; // wash
+export const topicEdge = (h: number) => `var(--t${hueOrFallback(h)}-edge)`; // hairline
 
 // ---- on-device speech synthesis — English + Spanish, never touches the network ----
 let _voices: SpeechSynthesisVoice[] = [];
@@ -243,9 +260,9 @@ export function Pill({
 }) {
   const map: Record<PillKind, JSX.CSSProperties> = {
     primary: { background: topicMid(hue), color: '#fff', boxShadow: C.shSoft },
-    soft: { background: '#fff', color: topicInk(hue), boxShadow: C.sh },
-    dark: { background: C.ink, color: '#fff' },
-    ghost: { background: 'transparent', color: C.ink, boxShadow: 'inset 0 0 0 1.5px rgba(44,40,36,0.18)' },
+    soft: { background: C.panel, color: topicInk(hue), boxShadow: C.sh },
+    dark: { background: C.solid, color: '#fff', boxShadow: `inset 0 0 0 1px ${C.hairline}` },
+    ghost: { background: 'transparent', color: C.ink, boxShadow: `inset 0 0 0 1.5px ${C.divider}` },
   };
   return (
     <button
@@ -270,14 +287,14 @@ export function OtherBubble({ who, en, es, hue }: { who: string; en: string; es:
     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
       <span
         style={{
-          width: 34, height: 34, flex: '0 0 auto', borderRadius: '50%', background: '#fff', boxShadow: C.sh,
+          width: 34, height: 34, flex: '0 0 auto', borderRadius: '50%', background: C.panel, boxShadow: C.sh,
           display: 'flex', alignItems: 'center', justifyContent: 'center', font: `800 9px ${C.round}`,
           color: topicInk(hue), textTransform: 'uppercase',
         }}
       >
         {who.slice(0, 2)}
       </span>
-      <div style={{ background: '#fff', borderRadius: '6px 20px 20px 20px', padding: '13px 16px', boxShadow: C.sh, maxWidth: 290 }}>
+      <div style={{ background: C.panel, borderRadius: '6px 20px 20px 20px', padding: '13px 16px', boxShadow: C.sh, maxWidth: 290 }}>
         <div style={{ font: `800 17px/1.3 ${C.round}`, color: C.ink }}>{en}</div>
         <div style={{ font: `600 13px ${C.round}`, color: C.dim, marginTop: 5 }}>{es}</div>
         <div style={{ marginTop: 10 }}>
@@ -303,7 +320,7 @@ export function GuiaBubble({ children, hue, label = 'Tía Marisol' }: { children
 export function YouBubble({ en, es }: { en: string; es: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <div style={{ background: C.ink, color: '#fff', borderRadius: '20px 20px 20px 6px', padding: '12px 16px', maxWidth: 280 }}>
+      <div style={{ background: C.solid, color: '#fff', borderRadius: '20px 20px 20px 6px', padding: '12px 16px', maxWidth: 280 }}>
         <div style={{ font: `800 16px/1.25 ${C.round}` }}>{en}</div>
         <div style={{ font: `600 12px ${C.round}`, opacity: 0.6, marginTop: 3 }}>{es}</div>
       </div>
@@ -313,7 +330,7 @@ export function YouBubble({ en, es }: { en: string; es: string }) {
 
 export function ProgressBar({ value, hue }: { value: number; hue: number }) {
   return (
-    <div style={{ height: 8, borderRadius: 6, background: '#fff', overflow: 'hidden', boxShadow: 'inset 0 0 0 1px rgba(44,40,36,0.06)' }}>
+    <div style={{ height: 8, borderRadius: 6, background: C.panel, overflow: 'hidden', boxShadow: `inset 0 0 0 1px ${C.divider}` }}>
       <div
         style={{
           width: `${Math.round(value * 100)}%`, height: '100%', borderRadius: 6, background: topicMid(hue),
@@ -337,7 +354,9 @@ export function Guia({
     <div
       style={{
         width: size, height: size, borderRadius: '50%', flex: '0 0 auto',
-        background: `repeating-linear-gradient(135deg, ${ink}14 0 4px, transparent 4px 8px)`,
+        // color-mix() (not a `${ink}14` hex-alpha suffix) so this still works
+        // when `ink` is a var(--pd-ink) reference, not just a literal hex.
+        background: `repeating-linear-gradient(135deg, color-mix(in oklab, ${ink} 14%, transparent) 0 4px, transparent 4px 8px)`,
         border: `1.5px solid ${ring}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: ink, font: `600 9px/1 ${C.round}`, letterSpacing: '0.5px', textTransform: 'uppercase',
       }}

@@ -16,7 +16,7 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, padding: wide ? '40px 48px' : '20px 26px 26px' }}>
       <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center', gap: 7, paddingTop: 6 }}>
         {Array.from({ length: total + 1 }).map((_, k) => (
-          <span key={k} style={{ width: k === i ? 22 : 7, height: 7, borderRadius: 9, background: k === i ? topicMid(250) : 'rgba(44,40,36,0.16)', transition: 'all .25s' }} />
+          <span key={k} style={{ width: k === i ? 22 : 7, height: 7, borderRadius: 9, background: k === i ? topicMid(250) : C.divider, transition: 'all .25s' }} />
         ))}
       </div>
       <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
@@ -28,7 +28,7 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
           </>
         ) : (
           <>
-            <Guia size={80} ink={C.ink} ring="rgba(0,0,0,0.1)" label="Tía" />
+            <Guia size={80} ink={C.ink} ring={C.divider} label="Tía" />
             <div style={{ font: `800 26px/1.2 ${C.round}`, color: C.ink, marginTop: 22 }}>
               Soy Tía Marisol.
               <br />
@@ -37,7 +37,7 @@ export function Onboarding({ onDone, wide }: { onDone: () => void; wide: boolean
             <div style={{ font: `600 15px/1.5 ${C.round}`, color: C.dim, marginTop: 12, maxWidth: 300 }}>Confírmame esto y empezamos. No necesitas cuenta ni internet.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22, width: '100%', maxWidth: 300 }}>
               {['🗣️  Hablo español', '🎯  Quiero aprender inglés'].map((t) => (
-                <div key={t} style={{ background: '#fff', boxShadow: C.sh, borderRadius: 16, padding: '14px 18px', font: `800 15px ${C.round}`, color: C.ink, textAlign: 'left' }}>
+                <div key={t} style={{ background: C.panel, boxShadow: C.sh, borderRadius: 16, padding: '14px 18px', font: `800 15px ${C.round}`, color: C.ink, textAlign: 'left' }}>
                   {t}
                 </div>
               ))}
@@ -81,7 +81,7 @@ export function Home({
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '8px 22px 20px', maxWidth: wide ? 760 : 'none', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 8 }}>
-          <Guia size={50} ink={C.ink} ring="rgba(0,0,0,0.1)" label="Tía" />
+          <Guia size={50} ink={C.ink} ring={C.divider} label="Tía" />
           <div style={{ flex: 1 }}>
             <div style={{ font: `700 14px ${C.round}`, color: C.dim }}>Buenos días,</div>
             <div style={{ font: `800 26px/1 ${C.round}`, color: C.ink }}>Rosa 👋</div>
@@ -124,7 +124,7 @@ export function Home({
               <div
                 key={k}
                 onClick={() => onPick(k)}
-                style={{ cursor: 'pointer', position: 'relative', borderRadius: 20, background: '#fff', boxShadow: C.sh, padding: '15px 16px 17px', opacity: locked ? 0.72 : 1 }}
+                style={{ cursor: 'pointer', position: 'relative', borderRadius: 20, background: C.panel, border: `1px solid ${C.hairline}`, boxShadow: C.sh, padding: '15px 16px 17px', opacity: locked ? 0.72 : 1 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Glyph topic={k} />
@@ -152,7 +152,7 @@ export function RightsCard({ onClose, topic = 'parada' }: { onClose: () => void;
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: topicSoft(hue) }}>
       <div style={{ flex: '0 0 auto', padding: '12px 22px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ font: `800 12px ${C.round}`, letterSpacing: '1px', textTransform: 'uppercase', color: topicInk(hue) }}>Tarjeta de derechos</span>
-        <button onClick={onClose} style={{ border: 'none', cursor: 'pointer', font: `700 13px ${C.round}`, color: topicInk(hue), background: '#fff', borderRadius: 999, padding: '7px 14px', boxShadow: C.shSoft }}>
+        <button onClick={onClose} style={{ border: 'none', cursor: 'pointer', font: `700 13px ${C.round}`, color: topicInk(hue), background: C.panel, borderRadius: 999, padding: '7px 14px', boxShadow: C.shSoft }}>
           Cerrar
         </button>
       </div>
@@ -162,7 +162,7 @@ export function RightsCard({ onClose, topic = 'parada' }: { onClose: () => void;
       </div>
       <div style={{ flex: '1 1 auto', overflowY: 'auto', padding: '14px 22px', display: 'flex', flexDirection: 'column', gap: 11 }}>
         {RIGHTS.map((r, i) => (
-          <div key={i} onClick={() => speak(r.en)} style={{ cursor: 'pointer', background: '#fff', borderRadius: 18, padding: '15px 18px', boxShadow: C.sh }}>
+          <div key={i} onClick={() => speak(r.en)} style={{ cursor: 'pointer', background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 18, padding: '15px 18px', boxShadow: C.sh }}>
             <div style={{ font: `800 ${enSize}px/1.2 ${C.round}`, color: C.ink }}>{r.en}</div>
             <div style={{ font: `600 ${esSize}px ${C.round}`, color: C.dim, marginTop: 6 }}>{r.es}</div>
           </div>
@@ -202,7 +202,7 @@ export function Phrasebook({ wide }: { wide: boolean }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               {g.items.map((p, i) => (
-                <div key={i} onClick={() => speak(p.en)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, background: '#fff', borderRadius: 16, padding: '13px 16px', boxShadow: C.shSoft }}>
+                <div key={i} onClick={() => speak(p.en)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 16, padding: '13px 16px', boxShadow: C.shSoft }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ font: `800 16px ${C.round}`, color: C.ink }}>{p.en}</div>
                     {/* Tapping the Spanish line hears it too — prefers a pre-generated
@@ -245,7 +245,7 @@ export function Preparate({
     <div style={{ height: '100%', overflowY: 'auto', background: C.bg }}>
       <div style={{ padding: wide ? '8px 8px 24px' : '12px 22px 24px', maxWidth: wide ? 720 : 'none', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingTop: 4 }}>
-          <Guia size={44} ink={C.ink} ring="rgba(0,0,0,0.1)" label="Tía" />
+          <Guia size={44} ink={C.ink} ring={C.divider} label="Tía" />
           <div style={{ flex: 1 }}>
             <div style={{ font: `800 22px/1.15 ${C.round}`, color: C.ink }}>Prepárate</div>
             <div style={{ font: `700 12px ${C.round}`, color: topicInk(hue) }}>Prepararse es cuidar a los tuyos.</div>
@@ -269,7 +269,7 @@ export function Preparate({
                 onClick={() => onToggle(it.id)}
                 style={{
                   cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12, borderRadius: 18,
-                  background: on ? topicSoft(hue) : '#fff', border: `1px solid ${on ? topicEdge(hue) : 'transparent'}`,
+                  background: on ? topicSoft(hue) : C.panel, border: `1px solid ${on ? topicEdge(hue) : C.hairline}`,
                   boxShadow: on ? 'none' : C.sh, padding: '14px 16px',
                 }}
               >

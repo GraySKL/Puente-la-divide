@@ -16,10 +16,16 @@ import { ScenarioRunner } from './scenario';
 
 const LS_KEY = 'puente_v1';
 
+type Theme = 'auto' | 'light' | 'dark';
+const THEME_ICON: Record<Theme, string> = { auto: '🌗', dark: '🌙', light: '☀️' };
+const THEME_LABEL: Record<Theme, string> = { auto: '🌗 Auto', dark: '🌙 Oscuro', light: '☀️ Claro' };
+const THEME_NEXT: Record<Theme, Theme> = { auto: 'dark', dark: 'light', light: 'auto' };
+
 interface Persisted {
   completed?: Record<string, boolean>;
   onboarded?: boolean;
   prep?: Record<string, boolean>;
+  theme?: Theme;
 }
 
 function loadState(): Persisted {
@@ -46,6 +52,7 @@ interface PuenteState {
   prep: Record<string, boolean>;
   rightsOpen: boolean;
   discreet: boolean;
+  theme: Theme;
 }
 
 interface PuenteHandlers {
@@ -58,6 +65,7 @@ interface PuenteHandlers {
   closeRights: () => void;
   nav: (r: string) => void;
   exitDiscreet: () => void;
+  cycleTheme: () => void;
 }
 
 function usePuente() {
@@ -68,10 +76,11 @@ function usePuente() {
   const [prep, setPrep] = useState<Record<string, boolean>>(saved.prep || {});
   const [rightsOpen, setRightsOpen] = useState(false);
   const [discreet, setDiscreet] = useState(false);
+  const [theme, setTheme] = useState<Theme>(saved.theme || 'auto');
 
   useEffect(() => {
-    saveState({ ...loadState(), completed, prep, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
-  }, [completed, prep, route]);
+    saveState({ ...loadState(), completed, prep, theme, onboarded: route !== 'onboarding' ? true : loadState().onboarded });
+  }, [completed, prep, route, theme]);
 
   const h: PuenteHandlers = {
     finishOnboarding: () => { saveState({ ...loadState(), onboarded: true }); setRoute('home'); },
@@ -87,8 +96,9 @@ function usePuente() {
       else setRoute(r as Route);
     },
     exitDiscreet: () => setDiscreet(false),
+    cycleTheme: () => setTheme((t) => THEME_NEXT[t]),
   };
-  return { st: { route, topic, completed, prep, rightsOpen, discreet } as PuenteState, h };
+  return { st: { route, topic, completed, prep, rightsOpen, discreet, theme } as PuenteState, h };
 }
 
 function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.Element {
@@ -109,7 +119,7 @@ function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.El
 }
 
 // ---------- NARROW (tab bar) ----------
-function TabBar({ route, onNav }: { route: Route; onNav: (r: string) => void }) {
+function TabBar({ route, onNav, theme, onCycleTheme }: { route: Route; onNav: (r: string) => void; theme: Theme; onCycleTheme: () => void }) {
   const items: [string, string, string][] = [
     ['home', '🏠', 'Hoy'],
     ['phrasebook', '💬', 'Frases'],
@@ -121,7 +131,7 @@ function TabBar({ route, onNav }: { route: Route; onNav: (r: string) => void }) 
     <div
       style={{
         flex: '0 0 auto', display: 'flex', gap: 4, padding: '8px 12px calc(4px + env(safe-area-inset-bottom, 0px))',
-        background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(44,40,36,0.07)',
+        background: C.chrome, backdropFilter: 'blur(8px)', borderTop: `1px solid ${C.divider}`,
       }}
     >
       {items.map(([k, ic, l]) => {
@@ -134,6 +144,14 @@ function TabBar({ route, onNav }: { route: Route; onNav: (r: string) => void }) 
           </button>
         );
       })}
+      <button
+        onClick={onCycleTheme}
+        aria-label={`Tema: ${THEME_LABEL[theme]}`}
+        title={THEME_LABEL[theme]}
+        style={{ flex: '0 0 auto', border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '5px 6px' }}
+      >
+        <span style={{ fontSize: 19, opacity: 0.6 }}>{THEME_ICON[theme]}</span>
+      </button>
     </div>
   );
 }
@@ -143,7 +161,7 @@ function NarrowChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>{activeScreen(st, h, false)}</div>
-      {showTabs && <TabBar route={st.route} onNav={h.nav} />}
+      {showTabs && <TabBar route={st.route} onNav={h.nav} theme={st.theme} onCycleTheme={h.cycleTheme} />}
       {st.rightsOpen && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 5 }}>
           <RightsCard topic={st.topic} onClose={h.closeRights} />
@@ -166,7 +184,7 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
     ['preparate', '🧳', 'Prepárate'],
   ];
   return (
-    <div style={{ width: 240, flex: '0 0 auto', background: '#fff', borderRight: '1px solid rgba(44,40,36,0.08)', display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
+    <div style={{ width: 240, flex: '0 0 auto', background: C.panel, borderRight: `1px solid ${C.divider}`, display: 'flex', flexDirection: 'column', padding: '20px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 18px' }}>
         <span style={{ width: 30, height: 30, borderRadius: 9, background: topicMid(250), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', font: `800 15px ${C.round}` }}>P</span>
         <span style={{ font: `800 16px ${C.round}`, color: C.ink }}>Puente</span>
@@ -185,14 +203,21 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
         );
       })}
       <div style={{ flex: 1 }} />
-      <button onClick={() => h.nav('derechos')} style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', borderRadius: 14, background: C.ink, color: '#fff', font: `800 14px ${C.round}`, whiteSpace: 'nowrap', marginBottom: 10 }}>
+      <button onClick={() => h.nav('derechos')} style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', borderRadius: 14, background: C.solid, color: '#fff', boxShadow: `inset 0 0 0 1px ${C.hairline}`, font: `800 14px ${C.round}`, whiteSpace: 'nowrap', marginBottom: 10 }}>
         🛡️ Mis derechos
+      </button>
+      <button
+        onClick={h.cycleTheme}
+        title={THEME_LABEL[st.theme]}
+        style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap', marginBottom: 2 }}
+      >
+        {THEME_LABEL[st.theme]}
       </button>
       <button onClick={() => h.nav('salir')} style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap' }}>
         🙈 Salida rápida
       </button>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 2px', marginTop: 6, borderTop: '1px solid rgba(44,40,36,0.08)' }}>
-        <Guia size={32} ink={C.ink} ring="rgba(0,0,0,0.1)" label="R" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 2px', marginTop: 6, borderTop: `1px solid ${C.divider}` }}>
+        <Guia size={32} ink={C.ink} ring={C.divider} label="R" />
         <div style={{ flex: 1 }}>
           <div style={{ font: `800 13px ${C.round}`, color: C.ink }}>Rosa</div>
           <div style={{ font: `700 10px ${C.round}`, color: topicInk(155) }}>● Sin red · listo</div>
@@ -251,5 +276,12 @@ function useIsWide(): boolean {
 export default function App() {
   const { st, h } = usePuente();
   const wide = useIsWide();
-  return wide ? <WideChrome st={st} h={h} /> : <NarrowChrome st={st} h={h} />;
+  return (
+    // .pd-app carries the theme CSS variables (see src/pages/app.astro);
+    // data-theme is only set for a manual pick — 'auto' leaves it unset so
+    // the stylesheet's @media (prefers-color-scheme) rule applies.
+    <div class="pd-app" data-theme={st.theme === 'auto' ? undefined : st.theme} style={{ height: '100%', width: '100%' }}>
+      {wide ? <WideChrome st={st} h={h} /> : <NarrowChrome st={st} h={h} />}
+    </div>
+  );
 }

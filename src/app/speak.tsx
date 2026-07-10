@@ -21,7 +21,7 @@ import type { Phrase } from './data';
 
 function PhraseCard({ target, hue }: { target: Phrase; hue: number }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 16, padding: '12px 16px', boxShadow: C.shSoft, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div style={{ background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 16, padding: '12px 16px', boxShadow: C.shSoft, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ flex: 1 }}>
         <div style={{ font: `800 17px/1.2 ${C.round}`, color: C.ink }}>{target.en}</div>
         <div style={{ font: `600 12px ${C.round}`, color: C.dim, marginTop: 2 }}>{target.es}</div>

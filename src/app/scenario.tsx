@@ -69,7 +69,7 @@ export function ScenarioRunner({
       rows.push(
         <div key={i} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {s.items.map((d, j) => (
-            <div key={j} style={{ background: '#fff', borderRadius: 18, boxShadow: C.sh, overflow: 'hidden' }}>
+            <div key={j} style={{ background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 18, boxShadow: C.sh, overflow: 'hidden' }}>
               <img src={`${base}${d.src}`} alt={d.alt} loading="lazy" style={{ display: 'block', width: '100%', height: 'auto' }} />
               <div style={{ padding: '12px 16px 14px' }}>
                 <div style={{ font: `700 14px/1.45 ${C.round}`, color: C.ink }}>{d.es}</div>
@@ -116,7 +116,7 @@ export function ScenarioRunner({
     } else if (s.t === 'recap') {
       rows.push(
         <div key={i} style={{ padding: '12px 0 4px' }}>
-          <div style={{ background: '#fff', borderRadius: 22, padding: '22px 20px', boxShadow: C.sh, textAlign: 'center' }}>
+          <div style={{ background: C.panel, border: `1px solid ${C.hairline}`, borderRadius: 22, padding: '22px 20px', boxShadow: C.sh, textAlign: 'center' }}>
             <div style={{ fontSize: 34 }}>🌿</div>
             <div style={{ font: `800 22px/1.2 ${C.round}`, color: C.ink, marginTop: 6 }}>¡Lo lograste!</div>
             <div style={{ font: `600 14px/1.5 ${C.round}`, color: C.dim, marginTop: 8 }}>{s.es}</div>
@@ -127,7 +127,7 @@ export function ScenarioRunner({
                     <div style={{ font: `800 15px ${C.round}`, color: C.ink }}>{p.en}</div>
                     <div style={{ font: `600 12px ${C.round}`, color: C.dim }}>{p.es}</div>
                   </div>
-                  <button onClick={() => speak(p.en)} style={{ border: 'none', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', background: '#fff', boxShadow: C.shSoft, fontSize: 14 }}>
+                  <button onClick={() => speak(p.en)} style={{ border: 'none', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', background: C.panel, boxShadow: C.shSoft, fontSize: 14 }}>
                     🔊
                   </button>
                 </div>
@@ -151,7 +151,7 @@ export function ScenarioRunner({
           <button
             onClick={onExit}
             aria-label="Salir"
-            style={{ border: 'none', background: '#fff', boxShadow: C.shSoft, cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', font: `800 18px ${C.round}`, color: topicInk(hue) }}
+            style={{ border: 'none', background: C.panel, boxShadow: C.shSoft, cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', font: `800 18px ${C.round}`, color: topicInk(hue) }}
           >
             ‹
           </button>
@@ -159,7 +159,7 @@ export function ScenarioRunner({
             <div style={{ font: `800 14px ${C.round}`, color: topicInk(hue) }}>{sc.title}</div>
             <div style={{ font: `700 10px ${C.round}`, letterSpacing: '0.6px', color: C.dim, textTransform: 'uppercase' }}>{sc.en}</div>
           </div>
-          <button onClick={onOpenRights} title="Mis derechos" style={{ border: 'none', background: '#fff', boxShadow: C.shSoft, cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', fontSize: 15 }}>
+          <button onClick={onOpenRights} title="Mis derechos" style={{ border: 'none', background: C.panel, boxShadow: C.shSoft, cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', fontSize: 15 }}>
             🛡️
           </button>
         </div>
@@ -174,7 +174,7 @@ export function ScenarioRunner({
       </div>
 
       {/* control */}
-      <div style={{ flex: '0 0 auto', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(6px)', borderTop: '1px solid rgba(44,40,36,0.07)', padding: `14px ${wide ? 26 : 18}px` }}>
+      <div style={{ flex: '0 0 auto', background: C.chromeSoft, backdropFilter: 'blur(6px)', borderTop: `1px solid ${C.divider}`, padding: `14px ${wide ? 26 : 18}px` }}>
         <div style={{ maxWidth: wide ? 560 : 'none', margin: '0 auto' }}>
           {isChoosing && cur.t === 'choose' && (
             <div>
@@ -184,7 +184,7 @@ export function ScenarioRunner({
                   <button
                     key={oi}
                     onClick={() => choose(oi)}
-                    style={{ textAlign: 'left', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 18, background: '#fff', boxShadow: C.sh }}
+                    style={{ textAlign: 'left', border: `1px solid ${C.hairline}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 18, background: C.panel, boxShadow: C.sh }}
                   >
                     <div style={{ flex: 1 }}>
                       <div style={{ font: `800 16px ${C.round}`, color: C.ink }}>{op.en}</div>
