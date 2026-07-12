@@ -3,10 +3,11 @@
 # of the Puente-la-divide repo (built and staged by its GitHub Actions) and
 # sync it into the folder nginx serves for the /puente-la-divide subsite.
 #
-# This script is run ON DEMAND only — no cron, no timers. Deploys happen
-# when Sara says so. Outbound-only: the droplet fetches from GitHub;
-# nothing connects inbound. Twin of site-pull.sh — the two sites deploy
-# independently and never touch each other's folders.
+# This script runs on a 10-minute cron (Sara's 2026-07-11 decision) so the
+# subsite always serves the newest staged build. THE SUBSITE ONLY: the
+# grayskl.com showcase is never auto-pulled — it deploys on Sara's word.
+# Outbound-only: the droplet fetches from GitHub; nothing connects inbound.
+# The two sites deploy independently and never touch each other's folders.
 #
 # One-time setup (as the deploy user on the droplet):
 #   1. sudo mkdir -p /var/www/puente-la-divide && sudo chown -R grayskl:grayskl /var/www/puente-la-divide
