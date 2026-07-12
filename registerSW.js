@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/puente-la-divide/sw.js', { scope: '/puente-la-divide/' })})}
