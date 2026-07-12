@@ -7,11 +7,11 @@
 // there's no bezel or title bar to fake, the real device/browser already
 // draws one. What's kept is the underlying idea: a narrow layout (bottom tab
 // bar) and a wide layout (sidebar), chosen responsively from viewport width.
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { getGuide, LOCKED, type AddressPref, type GuidePref, type TopicKey } from './data';
 import { C, Guia, setGuidePref, setVoicePref, speak, speakEs, topicInk, topicMid, topicSoft, type VoicePref } from './ui';
-import { ComingSoon, DiscreetCover, Home, NameEditor, NorteCarolina, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
+import { ComingSoon, Home, NameEditor, NorteCarolina, Onboarding, Phrasebook, Preparate, RightsCard } from './screens';
 import { ScenarioRunner } from './scenario';
 
 const LS_KEY = 'puente_v1';
@@ -71,13 +71,23 @@ function saveState(s: Persisted) {
 
 type Route = 'onboarding' | 'home' | 'scenario' | 'phrasebook' | 'preparate' | 'comingsoon' | 'nc';
 
+// One history entry per in-app view (see the history effects in usePuente):
+// everything popstate needs to restore that view, plus `d` = how many
+// entries deep we are, so back() never walks out of the app itself.
+interface NavSnapshot {
+  route?: Route;
+  topic?: TopicKey;
+  rights?: boolean;
+  editor?: boolean;
+  d?: number;
+}
+
 interface PuenteState {
   route: Route;
   topic: TopicKey;
   completed: Record<string, boolean>;
   prep: Record<string, boolean>;
   rightsOpen: boolean;
-  discreet: boolean;
   theme: Theme;
   voice: VoicePref;
   guide: GuidePref;
@@ -95,7 +105,7 @@ interface PuenteHandlers {
   openRights: () => void;
   closeRights: () => void;
   nav: (r: string) => void;
-  exitDiscreet: () => void;
+  back: () => void;
   cycleTheme: () => void;
   pickVoice: (v: VoicePref) => void;
   cycleVoice: () => void;
@@ -115,7 +125,6 @@ function usePuente() {
   const [completed, setCompleted] = useState<Record<string, boolean>>(saved.completed || {});
   const [prep, setPrep] = useState<Record<string, boolean>>(saved.prep || {});
   const [rightsOpen, setRightsOpen] = useState(false);
-  const [discreet, setDiscreet] = useState(false);
   const [theme, setTheme] = useState<Theme>(saved.theme || 'auto');
   const [voice, setVoice] = useState<VoicePref>(saved.voice || 'f');
   const [guide, setGuide] = useState<GuidePref>(saved.guide || 'marisol');
@@ -138,6 +147,46 @@ function usePuente() {
     setGuidePref(guide);
   }, [guide]);
 
+  // ---- browser-history integration ----------------------------------
+  // Each view change pushes a history entry, so the platform back gesture
+  // (iOS edge swipe, Android back swipe/button, browser back) returns to
+  // the previous in-app view instead of leaving the app. popstate restores
+  // the stored snapshot; `fromPop` keeps the push effect from re-pushing
+  // what popstate just applied.
+  const fromPop = useRef(false);
+  const depth = useRef(0);
+  const prevRoute = useRef<Route | null>(null);
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const s = (e.state || {}) as NavSnapshot;
+      fromPop.current = true;
+      depth.current = s.d || 0;
+      setRoute(s.route || 'home');
+      if (s.topic) setTopic(s.topic);
+      setRightsOpen(!!s.rights);
+      setNameEditorOpen(!!s.editor);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  useEffect(() => {
+    if (fromPop.current) {
+      fromPop.current = false;
+      prevRoute.current = route;
+      return;
+    }
+    // First run stamps the current entry instead of pushing; so does
+    // leaving onboarding, so back from Home never reopens a finished
+    // onboarding (Home is the app's base — back from there exits, as the
+    // platform expects).
+    const replace = prevRoute.current === null || prevRoute.current === 'onboarding';
+    if (!replace) depth.current += 1;
+    const snap: NavSnapshot = { route, topic, rights: rightsOpen, editor: nameEditorOpen, d: depth.current };
+    if (replace) history.replaceState(snap, '');
+    else history.pushState(snap, '');
+    prevRoute.current = route;
+  }, [route, topic, rightsOpen, nameEditorOpen]);
+
   const h: PuenteHandlers = {
     finishOnboarding: () => { saveState({ ...loadState(), onboarded: true }); setRoute('home'); },
     goHome: () => setRoute('home'),
@@ -145,13 +194,19 @@ function usePuente() {
     complete: (k) => setCompleted((c) => ({ ...c, [k]: true })),
     togglePrep: (id) => setPrep((p) => ({ ...p, [id]: !p[id] })),
     openRights: () => setRightsOpen(true),
-    closeRights: () => setRightsOpen(false),
+    // Closing an overlay pops the entry its opening pushed (when it did),
+    // so back afterwards doesn't reopen it; popstate does the actual close.
+    closeRights: () => {
+      if (depth.current > 0 && (history.state as NavSnapshot | null)?.rights) history.back();
+      else setRightsOpen(false);
+    },
     nav: (r) => {
       if (r === 'derechos') setRightsOpen(true);
-      else if (r === 'salir') setDiscreet(true);
       else setRoute(r as Route);
     },
-    exitDiscreet: () => setDiscreet(false),
+    back: () => {
+      if (depth.current > 0) history.back();
+    },
     cycleTheme: () => setTheme((t) => THEME_NEXT[t]),
     // Onboarding's voice-choice panel: store the pick, no confirmation audio
     // (no autoplay before the user's first gesture during onboarding).
@@ -183,10 +238,19 @@ function usePuente() {
     // Settings: tapping your own identity (Home greeting / sidebar row)
     // opens the same editor either place — see screens.tsx NameEditor.
     openNameEditor: () => setNameEditorOpen(true),
-    closeNameEditor: () => setNameEditorOpen(false),
-    saveNameEditor: (n, v) => { setName(n.trim().slice(0, NAME_MAX)); setAddress(v); setNameEditorOpen(false); },
+    // Same pop-on-close pattern as closeRights, so back never reopens it.
+    closeNameEditor: () => {
+      if (depth.current > 0 && (history.state as NavSnapshot | null)?.editor) history.back();
+      else setNameEditorOpen(false);
+    },
+    saveNameEditor: (n, v) => {
+      setName(n.trim().slice(0, NAME_MAX));
+      setAddress(v);
+      if (depth.current > 0 && (history.state as NavSnapshot | null)?.editor) history.back();
+      else setNameEditorOpen(false);
+    },
   };
-  return { st: { route, topic, completed, prep, rightsOpen, discreet, theme, voice, guide, name, address, nameEditorOpen } as PuenteState, h };
+  return { st: { route, topic, completed, prep, rightsOpen, theme, voice, guide, name, address, nameEditorOpen } as PuenteState, h };
 }
 
 function activeScreen(st: PuenteState, h: PuenteHandlers, wide: boolean): JSX.Element {
@@ -257,7 +321,6 @@ function TabBar({
     ['preparate', '🧳', 'Prepárate'],
     ['nc', '📍', 'En NC'],
     ['derechos', '🛡️', 'Derechos'],
-    ['salir', '🙈', 'Salir'],
   ];
   return (
     <div
@@ -326,11 +389,6 @@ function NarrowChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
           <RightsCard topic={st.topic} onClose={h.closeRights} />
         </div>
       )}
-      {st.discreet && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 9 }}>
-          <DiscreetCover onUnlock={h.exitDiscreet} />
-        </div>
-      )}
     </div>
   );
 }
@@ -387,9 +445,6 @@ function Sidebar({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
       >
         {st.guide === 'mateo' ? '🙋‍♂️' : '🙋‍♀️'} {getGuide(st.guide).short}
       </button>
-      <button onClick={() => h.nav('salir')} style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'transparent', color: C.dim, font: `700 13px ${C.round}`, whiteSpace: 'nowrap' }}>
-        🙈 Salida rápida
-      </button>
       {/* Tapping your own identity opens name/address editing (owner
           decision 2026-07-10) — narrow-chrome counterpart is the Home
           greeting, see screens.tsx Home + NameEditor. */}
@@ -432,11 +487,6 @@ function WideChrome({ st, h }: { st: PuenteState; h: PuenteHandlers }) {
             </div>
           </div>
         )}
-        {st.discreet && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 9 }}>
-            <DiscreetCover onUnlock={h.exitDiscreet} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -458,11 +508,45 @@ function useIsWide(): boolean {
 export default function App() {
   const { st, h } = usePuente();
   const wide = useIsWide();
+  // Edge-swipe fallback: installed iOS PWAs have no system back gesture, so
+  // a right-swipe that starts at the left screen edge walks back one view
+  // through the same history entries the platform gestures use. Where the
+  // system already owns the edge (Android gesture nav), this simply never
+  // fires — the system gesture wins and does the same thing. Attached with
+  // addEventListener, not JSX props: Preact resolves onTouchStart to the
+  // wrong event name on browsers that don't expose ontouchstart.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    let start: { x: number; y: number } | null = null;
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      start = t && t.clientX <= 30 ? { x: t.clientX, y: t.clientY } : null;
+    };
+    const onEnd = (e: TouchEvent) => {
+      const s = start;
+      start = null;
+      const t = e.changedTouches[0];
+      if (s && t && t.clientX - s.x > 70 && Math.abs(t.clientY - s.y) < 60) h.back();
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, []);
   return (
     // .pd-app carries the theme CSS variables (see src/pages/app.astro);
     // data-theme is only set for a manual pick — 'auto' leaves it unset so
     // the stylesheet's @media (prefers-color-scheme) rule applies.
-    <div class="pd-app" data-theme={st.theme === 'auto' ? undefined : st.theme} style={{ height: '100%', width: '100%' }}>
+    <div
+      ref={rootRef}
+      class="pd-app"
+      data-theme={st.theme === 'auto' ? undefined : st.theme}
+      style={{ height: '100%', width: '100%' }}
+    >
       {wide ? <WideChrome st={st} h={h} /> : <NarrowChrome st={st} h={h} />}
       {/* Rendered once at the top level (not per-chrome) so it overlays
           either layout identically — triggered from Home's greeting

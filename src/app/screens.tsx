@@ -1,6 +1,6 @@
-// src/app/screens.tsx — Onboarding, Home, RightsCard, Phrasebook, ComingSoon, DiscreetCover.
+// src/app/screens.tsx — Onboarding, Home, RightsCard, Phrasebook, ComingSoon.
 // Ported from Claude Design/pscreens.jsx (Preact + TS).
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import {
   APP_TOPICS, DISCLAIMER_EN, DISCLAIMER_ES, getGuide, juntxsFor, LOCKED, NC_HUE, NC_INTRO, NC_ITEMS, NC_LINK_URL, ONBOARDING, PHRASES, PREPARE_HUE, PREP_ITEMS, resolveAddress, RIGHTS, TOPICS, type AddressPref, type GuidePref, type TopicKey,
 } from './data';
@@ -373,6 +373,11 @@ export function Home({
             );
           })}
         </div>
+
+        {/* Build stamp — unique build number + short commit hash injected at
+            build time (astro.config.mjs), so the version on screen can be
+            matched to the exact commit that shipped it. */}
+        <div style={{ font: `700 10px ${C.round}`, color: C.faint, textAlign: 'center', marginTop: 26 }}>{__BUILD_TAG__}</div>
       </div>
     </div>
   );
@@ -623,27 +628,6 @@ export function ComingSoon({ topic, onClose }: { topic: TopicKey; onClose: () =>
           Volver al inicio
         </Pill>
       </div>
-    </div>
-  );
-}
-
-// ---------- DISCREET COVER ----------
-export function DiscreetCover({ onUnlock }: { onUnlock: () => void }) {
-  const [hint, setHint] = useState(true);
-  useEffect(() => {
-    const id = setTimeout(() => setHint(false), 2600);
-    return () => clearTimeout(id);
-  }, []);
-  return (
-    <div
-      onDblClick={onUnlock}
-      style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg,#cfe0ef,#eaf1f7)', color: '#33414f', cursor: 'pointer', position: 'relative' }}
-    >
-      <div style={{ fontSize: 64 }}>⛅</div>
-      <div style={{ font: `800 64px ${C.round}`, marginTop: 6 }}>21°</div>
-      <div style={{ font: `700 16px ${C.round}` }}>Parcialmente nublado</div>
-      <div style={{ font: `600 13px ${C.round}`, marginTop: 4, opacity: 0.7 }}>Tu ciudad · Martes</div>
-      {hint && <div style={{ position: 'absolute', bottom: 40, font: `700 12px ${C.round}`, opacity: 0.55 }}>Toca dos veces para volver a Puente</div>}
     </div>
   );
 }

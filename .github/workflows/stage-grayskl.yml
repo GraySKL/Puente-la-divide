@@ -24,7 +24,16 @@ jobs:
   build-and-stage:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — the build stamp (astro.config.mjs) counts commits
+      # for its unique build number; a shallow clone would always say 1.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Same number + hash the app displays, reused for the site-live commit
+      # message below so every staged update is traceable to its commit.
+      - id: rev
+        run: echo "tag=v$(git rev-list --count HEAD) $(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
@@ -45,4 +54,4 @@ jobs:
           publish_branch: site-live
           publish_dir: dist
           force_orphan: true
-          commit_message: 'stage: grayskl.com subsite ${{ github.sha }}'
+          commit_message: 'stage: grayskl.com subsite ${{ steps.rev.outputs.tag }}'

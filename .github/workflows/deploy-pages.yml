@@ -18,7 +18,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — the build stamp (astro.config.mjs) counts commits
+      # for its unique build number; a shallow clone would always say 1.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22

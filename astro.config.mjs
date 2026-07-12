@@ -1,9 +1,24 @@
 // @ts-check
+import { execSync } from 'node:child_process';
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import preact from '@astrojs/preact';
 import tailwindcss from '@tailwindcss/vite';
 import AstroPWA from '@vite-pwa/astro';
+
+// Build stamp shown at the bottom of Home: unique build number (commit count
+// on this branch) + short commit hash, so what's on screen can always be
+// matched to the exact commit that produced it. CI checkouts must use
+// fetch-depth: 0 or the count collapses to 1 (shallow clone).
+/** @param {string} cmd @param {string} fallback */
+function git(cmd, fallback) {
+  try {
+    return execSync(cmd).toString().trim();
+  } catch {
+    return fallback;
+  }
+}
+const BUILD_TAG = `v${git('git rev-list --count HEAD', '0')} · ${git('git rev-parse --short HEAD', 'dev')}`;
 
 // Base-path readiness: GitHub Pages serves this under /Puente-la-divide/, a
 // Capacitor shell serves it from /. Set ASTRO_BASE at build time to switch.
@@ -44,6 +59,7 @@ export default defineConfig({
     })
   ],
   vite: {
+    define: { __BUILD_TAG__: JSON.stringify(BUILD_TAG) },
     plugins: [tailwindcss()],
     server: {
       // Allow access from droplet hostname/IP during dev
