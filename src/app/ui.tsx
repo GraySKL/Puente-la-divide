@@ -108,10 +108,16 @@ const MALE_VOICE_NAMES = /(guy|andrew|david|mark|christopher|male|alex|daniel|fr
 const FEMALE_VOICE_NAMES_ES = /(dalia|paloma|m[óo]nica|paulina|helena|laura|elvira|sabina|marisol)/;
 const MALE_VOICE_NAMES_ES = /(jorge|alonso|juan|mateo)/;
 
-// Rank a voice for naturalness. We never hit the network; we just pick the
-// best engine already installed on the device, which keeps TTS offline.
+// Rank a voice for naturalness among the device's LOCAL voices only.
+// Network-backed voices (localService=false — e.g. Chrome's "Google US
+// English") send the utterance text to the vendor's servers; with this
+// app's threat model a rights phrase must never leave the device, so they
+// are rejected outright, even at some cost in fallback voice quality.
+// (Android's on-device Google TTS engine reports localService=true and
+// still qualifies.)
 function _scoreVoice(v: SpeechSynthesisVoice, lang2: string, pref?: VoicePref): number {
   if (!v || !v.lang) return -1;
+  if (!v.localService) return -1;
   const vl = v.lang.toLowerCase().replace('_', '-');
   if (!vl.startsWith(lang2)) return -1;
   const n = (v.name || '').toLowerCase();
@@ -119,7 +125,6 @@ function _scoreVoice(v: SpeechSynthesisVoice, lang2: string, pref?: VoicePref): 
   if (n.includes('natural')) s += 60;
   if (n.includes('neural')) s += 60;
   if (n.includes('premium') || n.includes('enhanced')) s += 55;
-  if (n.includes('online')) s += 30;
   if (n.includes('google')) s += 45;
   if (n.includes('siri')) s += 50;
   if (/(samantha|alex|ava|allison|aaron|evan|jenny|aria|nova|serena|kate|daniel|karen|moira|tessa)/.test(n)) s += 35;
@@ -127,7 +132,6 @@ function _scoreVoice(v: SpeechSynthesisVoice, lang2: string, pref?: VoicePref): 
   if (lang2 === 'en' && vl === 'en-us') s += 8;
   if (lang2 === 'es' && (vl === 'es-mx' || vl === 'es-us')) s += 10;
   if (lang2 === 'es' && vl === 'es-es') s += 4;
-  if (v.localService) s += 5;
   if (/(compact|eloquence|fred|albert|zarvox|trinoids|cellos|bells|bahh|boing|jester|wobble|whisper)/.test(n)) s -= 40;
   if (pref && lang2 === 'en') {
     if (pref === 'f' && FEMALE_VOICE_NAMES.test(n)) s += 20;
@@ -166,9 +170,15 @@ function _speakTts(text: string, lang = 'en-US') {
     speechSynthesis.cancel();
     const lang2 = lang.slice(0, 2).toLowerCase();
     const v = _pickVoice(lang2);
+    // No confirmed on-device voice -> stay silent. Speaking without an
+    // explicit voice uses the platform default, which can be network-backed
+    // (same leak _scoreVoice guards against). Voices usually arrive within
+    // a second of load (see the _poll above), so this is a brief gap at
+    // worst — and the bundled mp3 clips don't pass through here at all.
+    if (!v) return;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = (v && v.lang) || lang;
-    if (v) u.voice = v;
+    u.lang = v.lang || lang;
+    u.voice = v;
     // Warmer, less robotic cadence: a touch slower, natural pitch, full volume.
     u.rate = 0.92;
     u.pitch = 1.02;
